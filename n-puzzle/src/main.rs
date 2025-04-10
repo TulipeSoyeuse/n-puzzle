@@ -1,3 +1,8 @@
+pub mod arena;
+pub mod tests;
+
+use arena::Puzzle;
+
 fn main() {
-    println!("Hello, world!");
+    let _p = Puzzle::new(4);
 }
