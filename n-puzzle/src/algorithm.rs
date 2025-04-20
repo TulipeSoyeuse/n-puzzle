@@ -3,6 +3,10 @@ pub mod heuristics {
     use crate::arena::Puzzle;
     type PContainer = Vec<Vec<u16>>;
 
+    pub enum EHeuristic {
+        Hamming_Distance,
+    }
+
     fn hamming_distance(p: Puzzle, reference: PContainer) -> i32 {
         let mut counter = 0;
 

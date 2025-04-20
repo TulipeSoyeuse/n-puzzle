@@ -1,5 +1,6 @@
 mod Tree;
 mod algorithm;
+mod algorithm;
 mod arena;
 mod cli;
 mod tests;
@@ -7,9 +8,17 @@ mod tests;
 use std::io::{BufReader, stdin};
 
 use crate::cli::Args;
+use algorithm::heuristics::EHeuristic;
 use arena::{Mouvement, Puzzle, gen_solved_ref};
 use clap::Parser;
 use std::fs::File;
+
+fn match_heuristic(flag: String) -> Result<EHeuristic, ()> {
+    match flag.as_str() {
+        "hd" => Ok(EHeuristic::Hamming_Distance),
+        _ => Err(()),
+    }
+}
 
 fn main() -> std::io::Result<()> {
     let args = Args::parse();

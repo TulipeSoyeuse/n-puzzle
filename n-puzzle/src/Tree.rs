@@ -1,4 +1,4 @@
-use crate::arena::Puzzle;
+use crate::arena::{Mouvement, Puzzle};
 
 // Tree
 pub struct Tree {
@@ -28,5 +28,23 @@ impl Node {
     fn new_child(&mut self, state: Puzzle) {
         let child = Node::new(state);
         self.childrens.push(Some(child))
+    }
+
+    fn generate_child(&mut self) {
+        for i in [
+            self.state.clone_left(),
+            self.state.clone_up(),
+            self.state.clone_right(),
+            self.state.clone_down(),
+        ] {
+            match i {
+                Ok(puzzle) => self.new_child(puzzle),
+                Err(()) => (),
+            }
+        }
+
+        for child in self.childrens {
+            set_heuristics(child);
+        }
     }
 }

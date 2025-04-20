@@ -1,7 +1,12 @@
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[command(
+    version = "1.0",
+    name = "n-puzzle solver",
+    about = "solve n-puzzle with the A* search algorithm",
+    long_about = "try to solve puzzle of size N as fast as possible.\nThis program include multiple heuristics and some display option"
+)]
 pub struct Args {
     // size of the puzzle
     #[arg(short, long)]
@@ -10,6 +15,10 @@ pub struct Args {
     // file holding the puzzle (alternatively if not provided, read it from stdin)
     #[arg(short, long, default_value_t = String::from("stdin"))]
     pub file: String,
+
+    // heuristic flags
+    #[arg(short, long, default_value_t = String::from("hd"))]
+    pub heuristic: String,
 
     //debug flag -> display every state the square will go through
     #[arg(long)]
