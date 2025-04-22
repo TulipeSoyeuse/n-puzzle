@@ -1,13 +1,14 @@
 pub mod heuristics {
-    use crate::Tree::{Node, Tree};
     use crate::arena::Puzzle;
-    type PContainer = Vec<Vec<u16>>;
 
+    pub type PContainer = Vec<Vec<u16>>;
+
+    #[derive(PartialEq, Eq, Clone)]
     pub enum EHeuristic {
-        Hamming_Distance,
+        HammingDistance,
     }
 
-    fn hamming_distance(p: Puzzle, reference: PContainer) -> i32 {
+    pub fn hamming_distance(p: &Puzzle, reference: &PContainer) -> u32 {
         let mut counter = 0;
 
         for i in 0..p.dim {
@@ -21,5 +22,13 @@ pub mod heuristics {
         }
 
         counter
+    }
+
+    pub fn set_heuristics(heuristic: &EHeuristic, p: &Puzzle, reference: &PContainer) -> u32 {
+        if *heuristic == EHeuristic::HammingDistance {
+            hamming_distance(p, &reference)
+        } else {
+            0
+        }
     }
 }
