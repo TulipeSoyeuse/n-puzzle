@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, path::Iter, u16};
 
 use crate::{
     algorithm::heuristics::{self, PContainer},
@@ -9,6 +9,7 @@ use crate::{
 pub struct Tree<'a> {
     root: Node<'a>,
     openlist: Vec<&'a Node<'a>>,
+    closelist: Vec<&'a Node<'a>>,
 }
 
 impl<'a> Tree<'a> {
@@ -20,15 +21,18 @@ impl<'a> Tree<'a> {
         Tree {
             root: Node::new(state, heuristic, reference),
             openlist: Vec::new(),
+            closelist: Vec::new(),
         }
     }
 
+    fn explore_next_node(&mut self, current: &mut Node<'a>) -> &Node<'a> {}
+
     pub fn solve_puzzle(&mut self) -> &Puzzle {
-        self.root.generate_child();
+        let current_pick = &mut self.root;
 
-        let current_pick = &self.root;
-        while current_pick
-
+        loop {
+            current_pick.generate_child();
+        }
     }
 }
 
@@ -46,6 +50,7 @@ pub struct Node<'a> {
     pub heuristic: heuristics::EHeuristic,
     pub cost: u32,
     pub children: Vec<Node<'a>>,
+    is_children_generated: bool,
 }
 impl<'a> Node<'a> {
     fn new(state: Puzzle, heuristic: heuristics::EHeuristic, reference: &'a PContainer) -> Self {
@@ -55,6 +60,7 @@ impl<'a> Node<'a> {
             cost: 0,
             children: Vec::new(),
             reference,
+            is_children_generated: false,
         }
     }
 
@@ -66,6 +72,10 @@ impl<'a> Node<'a> {
 
     // generate child Option<child,()> if mouv is possible and return it
     pub fn generate_child(&mut self) {
+        if self.is_children_generated {
+            return;
+        }
+
         for i in [
             self.state.clone_left(),
             self.state.clone_up(),
@@ -84,6 +94,8 @@ impl<'a> Node<'a> {
             child.cost =
                 heuristics::set_heuristics(&child.heuristic, &child.state, child.reference);
         }
+
+        self.is_children_generated = true;
     }
 }
 

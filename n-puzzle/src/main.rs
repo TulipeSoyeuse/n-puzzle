@@ -34,8 +34,8 @@ fn main() -> std::io::Result<()> {
     }
 
     // Tree setup
-    let tree = Tree::new(puzzle, heuristics::EHeuristic::HammingDistance, &psref);
-
+    let mut tree = Tree::new(puzzle, heuristics::EHeuristic::HammingDistance, &psref);
+    tree.solve_puzzle();
     println!("{}", tree);
 
     Ok(())
