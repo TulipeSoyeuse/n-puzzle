@@ -4,14 +4,14 @@ mod cli;
 mod tests;
 mod tree;
 
-use std::io::{BufReader, stdin};
-
 use crate::cli::Args;
 use algorithm::heuristics::{self, EHeuristic};
 use arena::{Mouvement, Puzzle, gen_solved_ref};
-use clap::Parser;
+use clap::{Error, Parser};
 use std::fs::File;
-use tree::Tree;
+use std::io::{BufReader, stdin};
+use std::rc::Rc;
+use tree::Arena;
 
 fn match_heuristic(flag: String) -> Result<EHeuristic, ()> {
     match flag.as_str() {
@@ -28,15 +28,18 @@ fn main() -> std::io::Result<()> {
     // read and fill puzzle
     if args.file == "stdin" {
         let _ = puzzle.init(stdin().lock())?;
-    } else {
+    } else if !args.file.is_empty() {
         let f = File::open(args.file)?;
         let _ = puzzle.init(BufReader::new(f))?;
+    } else {
+        println!("No file provided");
+        return Ok(());
     }
 
     // Tree setup
-    let mut tree = Tree::new(puzzle, heuristics::EHeuristic::HammingDistance, &psref);
-    tree.solve_puzzle();
-    println!("{}", tree);
+    let mut arena = Arena::new(heuristics::EHeuristic::HammingDistance, Rc::new(psref));
+    arena.init(puzzle);
+    let _res = arena.solve_puzzle();
 
     Ok(())
 }

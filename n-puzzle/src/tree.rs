@@ -1,105 +1,109 @@
-use std::{fmt::Display, path::Iter, u16};
-
 use crate::{
     algorithm::heuristics::{self, PContainer},
     arena::{Mouvement, Puzzle},
 };
+use std::rc::Rc;
+use std::{fmt::Display, iter::Enumerate};
 
 // Tree
-pub struct Tree<'a> {
-    root: Node<'a>,
-    openlist: Vec<&'a Node<'a>>,
-    closelist: Vec<&'a Node<'a>>,
+pub struct Arena {
+    nodes: Vec<Node>,
+
+    heuristic: heuristics::EHeuristic,
+    reference: Rc<PContainer>,
+
+    openlist: Vec<usize>,
+    closelist: Vec<usize>,
 }
 
-impl<'a> Tree<'a> {
-    pub fn new(
-        state: Puzzle,
-        heuristic: heuristics::EHeuristic,
-        reference: &'a PContainer,
-    ) -> Self {
-        Tree {
-            root: Node::new(state, heuristic, reference),
-            openlist: Vec::new(),
-            closelist: Vec::new(),
+impl Arena {
+    pub fn new(heuristic: heuristics::EHeuristic, reference: Rc<PContainer>) -> Self {
+        Arena {
+            nodes: vec![],
+            openlist: vec![],
+            closelist: vec![],
+            heuristic,
+            reference,
         }
     }
 
-    fn explore_next_node(&mut self, current: &mut Node<'a>) -> &Node<'a> {}
+    pub fn init(&mut self, state: Puzzle) {
+        let root = Node::new(state, self.heuristic.clone(), &self.reference, 0);
+        self.nodes.push(root);
+    }
 
-    pub fn solve_puzzle(&mut self) -> &Puzzle {
-        let current_pick = &mut self.root;
+    pub fn generate_children(&mut self, parent_idx: usize) {
+        for v in [
+            self.nodes[parent_idx].state.clone_up(),
+            self.nodes[parent_idx].state.clone_down(),
+            self.nodes[parent_idx].state.clone_left(),
+            self.nodes[parent_idx].state.clone_right(),
+        ] {
+            match v {
+                Ok(state) => {
+                    let len = self.nodes.len();
+                    let node = Node::new(state, self.heuristic.clone(), &self.reference, len);
+                    self.nodes.push(node);
+                    self.nodes[parent_idx].children.push(len);
+                }
+                Err(()) => (),
+            };
+        }
+    }
 
+    pub fn solve_puzzle(&mut self) -> Option<Puzzle> {
+        // checking if arena is initialized
+        if self.nodes.is_empty() {
+            return None;
+        }
+        let current_node_idx = 0;
+
+        // A* algorithm loop
         loop {
-            current_pick.generate_child();
+            let children = self.generate_children(current_node_idx);
         }
-    }
-}
-
-impl Display for Tree<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.root)?;
-        Ok(())
     }
 }
 
 // Node
-pub struct Node<'a> {
+pub struct Node {
     pub state: Puzzle,
-    pub reference: &'a PContainer,
+
+    pub reference: Rc<PContainer>,
     pub heuristic: heuristics::EHeuristic,
     pub cost: u32,
-    pub children: Vec<Node<'a>>,
+
+    pub idx: usize,
+    pub children: Vec<usize>,
     is_children_generated: bool,
 }
-impl<'a> Node<'a> {
-    fn new(state: Puzzle, heuristic: heuristics::EHeuristic, reference: &'a PContainer) -> Self {
-        Node {
+
+impl Node {
+    fn new(
+        state: Puzzle,
+        heuristic: heuristics::EHeuristic,
+        reference: &Rc<PContainer>,
+        idx: usize,
+    ) -> Self {
+        let mut node = Node {
             state,
             heuristic,
             cost: 0,
-            children: Vec::new(),
-            reference,
+            children: Vec::with_capacity(1000),
+            reference: Rc::clone(reference),
             is_children_generated: false,
-        }
+            idx,
+        };
+        node.calculate_cost();
+        node
     }
 
-    // push a new Option<child> onto the child list
-    fn new_child(&mut self, state: Puzzle) {
-        let child = Node::new(state, self.heuristic.clone(), self.reference);
-        self.children.push(child)
-    }
-
-    // generate child Option<child,()> if mouv is possible and return it
-    pub fn generate_child(&mut self) {
-        if self.is_children_generated {
-            return;
-        }
-
-        for i in [
-            self.state.clone_left(),
-            self.state.clone_up(),
-            self.state.clone_right(),
-            self.state.clone_down(),
-        ] {
-            // match the result of the puzzle creation to create associated child
-            match i {
-                Ok(puzzle) => self.new_child(puzzle),
-                Err(()) => (),
-            }
-        }
-
-        // calculate heuristic for each child
-        for child in self.children.iter_mut() {
-            child.cost =
-                heuristics::set_heuristics(&child.heuristic, &child.state, child.reference);
-        }
-
-        self.is_children_generated = true;
+    fn calculate_cost(&mut self) {
+        heuristics::set_heuristics(&self.heuristic, &self.state, &self.reference);
     }
 }
 
-impl Display for Node<'_> {
+impl Display for Node {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "{}", "Puzzle Node")?;
         write!(f, "{}", self.state)?;
