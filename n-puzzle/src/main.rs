@@ -5,9 +5,9 @@ mod tests;
 mod tree;
 
 use crate::cli::Args;
-use algorithm::heuristics::{self, EHeuristic};
-use arena::{Mouvement, Puzzle, gen_solved_ref};
-use clap::{Error, Parser};
+use algorithm::heuristics::EHeuristic;
+use arena::{Puzzle, gen_solved_ref};
+use clap::Parser;
 use std::fs::File;
 use std::io::{BufReader, stdin};
 use std::rc::Rc;
@@ -16,6 +16,7 @@ use tree::Arena;
 fn match_heuristic(flag: String) -> Result<EHeuristic, ()> {
     match flag.as_str() {
         "hd" => Ok(EHeuristic::HammingDistance),
+        "ed" => Ok(EHeuristic::EuclidienDistance),
         _ => Err(()),
     }
 }
@@ -37,9 +38,14 @@ fn main() -> std::io::Result<()> {
     }
 
     // Tree setup
-    let mut arena = Arena::new(heuristics::EHeuristic::HammingDistance, Rc::new(psref));
+    let heuristic = match_heuristic(args.heuristic);
+    let mut arena = Arena::new(
+        heuristic.unwrap_or(EHeuristic::EuclidienDistance),
+        Rc::new(psref),
+    );
     arena.init(puzzle);
-    let _res = arena.solve_puzzle();
-
+    let res = arena.solve_puzzle();
+    println!("{}", res.unwrap());
+    println!("solved with {} node explored", arena.closelist.len());
     Ok(())
 }

@@ -17,7 +17,7 @@ pub struct Args {
     pub file: String,
 
     // heuristic flags
-    #[arg(long, default_value_t = String::from("hd"))]
+    #[arg(long, default_value_t = String::from("ed"))]
     pub heuristic: String,
 
     //debug flag -> display every state the square will go through

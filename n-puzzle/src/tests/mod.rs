@@ -1,9 +1,11 @@
 #[cfg(test)]
 mod tests {
+    use crate::algorithm::heuristics::EHeuristic;
     use crate::arena::{Mouvement, Puzzle, gen_solved_ref};
+    use crate::tree::Arena;
     use std::fs::File;
     use std::io::BufReader;
-
+    use std::rc::Rc;
     #[test]
     fn capacity() {
         let puzzle = Puzzle::new(4);
@@ -98,5 +100,18 @@ mod tests {
         let mut puzzle = Puzzle::new(3);
         puzzle.init_from(&reference).unwrap();
         assert!(puzzle.is_solved(reference))
+    }
+
+    #[test]
+    fn tree_setup() {
+        let reference = gen_solved_ref(3);
+        let f = File::open("src/tests/test_dim3.puzzle").unwrap();
+        let mut puzzle = Puzzle::new(3);
+        let _ = puzzle.init(BufReader::new(f));
+
+        let mut arena = Arena::new(EHeuristic::HammingDistance, Rc::new(reference));
+        arena.init(puzzle);
+        arena.generate_children(0);
+        assert_eq!(arena.len(), 5);
     }
 }

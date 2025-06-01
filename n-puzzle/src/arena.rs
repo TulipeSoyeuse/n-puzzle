@@ -1,4 +1,5 @@
 use regex::Regex;
+use std::fmt::Debug;
 use std::fmt::Display;
 use std::io;
 
@@ -14,8 +15,8 @@ pub struct Puzzle {
 
 #[derive(Debug, Clone)]
 pub struct Point {
-    x: usize,
-    y: usize,
+    pub x: usize,
+    pub y: usize,
 }
 
 pub fn gen_solved_ref(dim: usize) -> Vec<Vec<u16>> {
@@ -39,7 +40,6 @@ pub fn gen_solved_ref(dim: usize) -> Vec<Vec<u16>> {
 
         //bottom to left
         for i in (left..=right).rev() {
-            println!("i:{}", i);
             puzzle_ref[bottom][i] = num;
             num += 1;
         }
@@ -66,6 +66,27 @@ impl Puzzle {
             init: false,
             solved: false,
         }
+    }
+
+    pub fn find(&self, val: u16) -> Point {
+        if val == 0 {
+            return self.empty_cell.clone();
+        }
+
+        let mut x = 0;
+        let mut y = 0;
+        for (count, line) in self.puzzle.iter().enumerate() {
+            match line.iter().position(|x| *x == val) {
+                Some(v) => {
+                    x = count;
+                    y = v;
+                    break;
+                }
+                None => continue,
+            };
+        }
+
+        Point { x, y }
     }
 
     pub fn init<T: io::BufRead>(&mut self, mut f: T) -> io::Result<()> {
