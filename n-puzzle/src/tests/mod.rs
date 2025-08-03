@@ -1,11 +1,12 @@
 #[cfg(test)]
 mod tests {
     use crate::algorithm::heuristics::EHeuristic;
-    use crate::arena::{Mouvement, Puzzle, gen_solved_ref};
+    use crate::arena::{Mouvement, Point, Puzzle, gen_solved_ref};
     use crate::tree::Arena;
     use std::fs::File;
     use std::io::BufReader;
     use std::rc::Rc;
+
     #[test]
     fn capacity() {
         let puzzle = Puzzle::new(4);
@@ -16,6 +17,33 @@ mod tests {
             assert_eq!(line.len(), 4);
             println!("line size: {}", line.capacity());
         }
+    }
+
+    #[test]
+    fn dim_4_init() {
+        let f = File::open("src/tests/test_dim4.puzzle").unwrap();
+        let mut puzzle = Puzzle::new(4);
+        let _ = puzzle.init(BufReader::new(f));
+        assert_eq!(puzzle[0][0], 4);
+        assert_eq!(puzzle[0][1], 9);
+        assert_eq!(puzzle[0][2], 7);
+        println!("{:?}", puzzle.empty_cell);
+        assert!(puzzle.empty_cell == Point { x: 0, y: 3 });
+
+        assert_eq!(puzzle[1][0], 3);
+        assert_eq!(puzzle[1][1], 13);
+        assert_eq!(puzzle[1][2], 1);
+        assert_eq!(puzzle[1][3], 12);
+
+        assert_eq!(puzzle[2][0], 15);
+        assert_eq!(puzzle[2][1], 8);
+        assert_eq!(puzzle[2][2], 2);
+        assert_eq!(puzzle[2][3], 11);
+
+        assert_eq!(puzzle[3][0], 5);
+        assert_eq!(puzzle[3][1], 14);
+        assert_eq!(puzzle[3][2], 10);
+        assert_eq!(puzzle[3][3], 6);
     }
 
     #[test]

@@ -25,7 +25,10 @@ fn main() -> std::io::Result<()> {
     let args = Args::parse();
     let mut puzzle = Puzzle::new(args.size);
     let psref = gen_solved_ref(args.size);
+    let mut ref_ = Puzzle::new(args.size);
 
+    ref_.init_from(&psref)?;
+    println!("solved reference:\n{}", ref_);
     // read and fill puzzle
     if args.file == "stdin" {
         let _ = puzzle.init(stdin().lock())?;
@@ -44,8 +47,8 @@ fn main() -> std::io::Result<()> {
         Rc::new(psref),
     );
     arena.init(puzzle);
-    let res = arena.solve_puzzle();
-    println!("{}", res.unwrap());
-    println!("solved with {} node explored", arena.closelist.len());
+    arena.solve_puzzle(args.display_step);
+
+    arena.display_solution();
     Ok(())
 }

@@ -23,4 +23,7 @@ pub struct Args {
     //debug flag -> display every state the square will go through
     #[arg(long)]
     pub display_mode: bool,
+
+    #[arg(long, short, default_value_t = 1000)]
+    pub display_step: usize,
 }

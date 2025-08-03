@@ -13,7 +13,7 @@ pub struct Puzzle {
     solved: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Point {
     pub x: usize,
     pub y: usize,
@@ -23,32 +23,50 @@ pub fn gen_solved_ref(dim: usize) -> Vec<Vec<u16>> {
     let (mut top, mut bottom, mut left, mut right) = (0, dim - 1, 0, dim - 1);
     let mut num = 1;
     let mut puzzle_ref = vec![vec![0u16; dim]; dim];
+    let max = (dim * dim - 1) as u16;
+
     while top < bottom && left < right {
         // left to right
         for i in left..=right {
             puzzle_ref[top][i] = num;
-            num += 1;
+            if num < max {
+                num += 1;
+            } else {
+                return puzzle_ref;
+            }
         }
         top += 1;
 
         // right to bottom
         for i in top..=bottom {
             puzzle_ref[i][right] = num;
-            num += 1;
+            if num < max {
+                num += 1;
+            } else {
+                return puzzle_ref;
+            }
         }
         right = right.saturating_sub(1);
 
         //bottom to left
         for i in (left..=right).rev() {
             puzzle_ref[bottom][i] = num;
-            num += 1;
+            if num < max {
+                num += 1;
+            } else {
+                return puzzle_ref;
+            }
         }
         bottom = bottom.saturating_sub(1);
 
         // bottom to top
         for i in (top..=bottom).rev() {
             puzzle_ref[i][left] = num;
-            num += 1;
+            if num < max {
+                num += 1;
+            } else {
+                return puzzle_ref;
+            }
         }
         left += 1;
     }
@@ -97,22 +115,29 @@ impl Puzzle {
             ));
         }
         let mut buf = String::new();
-        let re = Regex::new(r"^\s*(\d{1,3}(?:\s+\d{1,3})+)\s*$").unwrap();
-        let mut n: usize = 0;
+        let re = Regex::new(r"\b\d+\b").unwrap();
+        let mut i = 0;
+        let mut first_line = true;
+
         while f.read_line(&mut buf)? != 0 {
             if buf.starts_with("#") {
                 ()
-            } else if re.is_match(&buf) {
-                for (c, v) in buf.trim().split_whitespace().enumerate() {
-                    if n < self.dim && c < self.dim {
-                        let v = v.to_string().parse().unwrap_or(0);
-                        if v == 0 {
-                            self.empty_cell = Point { x: n, y: c }
-                        }
-                        self.puzzle[n][c] = v;
+            } else if first_line {
+                first_line = false;
+                ()
+            } else {
+                let mut j = 0;
+                for c in re
+                    .find_iter(&buf)
+                    .map(|f| f.as_str().parse::<u16>().unwrap())
+                {
+                    if c == 0 {
+                        self.empty_cell = Point { x: i, y: j };
                     }
+                    self.puzzle[i][j] = c;
+                    j += 1;
                 }
-                n += 1;
+                i += 1;
             }
             buf.clear();
         }
@@ -120,6 +145,7 @@ impl Puzzle {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn init_from(&mut self, v: &Vec<Vec<u16>>) -> io::Result<()> {
         self.puzzle = v.clone();
         Ok(())
@@ -157,6 +183,15 @@ impl Display for Puzzle {
         )
     }
 }
+
+impl Index<usize> for Puzzle {
+    type Output = Vec<u16>;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.puzzle[index]
+    }
+}
+
 pub trait Mouvement {
     fn up(&mut self) -> Result<(), ()>;
     fn down(&mut self) -> Result<(), ()>;
@@ -247,6 +282,7 @@ impl Mouvement for Puzzle {
 }
 
 use std::cmp::PartialEq;
+use std::ops::Index;
 
 impl PartialEq for Puzzle {
     fn eq(&self, other: &Self) -> bool {
