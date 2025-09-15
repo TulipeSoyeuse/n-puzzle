@@ -1,3 +1,8 @@
+//! Arena
+//!
+//! regroup structure and logic for the puzzle itself, including mouvement and helpers
+
+use crate::heuristics::PContainer;
 use regex::Regex;
 use std::fmt::Debug;
 use std::fmt::Display;
@@ -5,7 +10,7 @@ use std::io;
 
 #[derive(Debug, Clone)]
 pub struct Puzzle {
-    pub puzzle: Vec<Vec<u16>>,
+    pub puzzle: PContainer,
     pub mouv_count: usize,
     pub dim: usize,
     pub empty_cell: Point,
@@ -19,7 +24,8 @@ pub struct Point {
     pub y: usize,
 }
 
-pub fn gen_solved_ref(dim: usize) -> Vec<Vec<u16>> {
+/// generate a reference puzzle
+pub fn gen_solved_ref(dim: usize) -> PContainer {
     let (mut top, mut bottom, mut left, mut right) = (0, dim - 1, 0, dim - 1);
     let mut num = 1;
     let mut puzzle_ref = vec![vec![0u16; dim]; dim];
@@ -146,12 +152,12 @@ impl Puzzle {
     }
 
     #[allow(dead_code)]
-    pub fn init_from(&mut self, v: &Vec<Vec<u16>>) -> io::Result<()> {
+    pub fn init_from(&mut self, v: &PContainer) -> io::Result<()> {
         self.puzzle = v.clone();
         Ok(())
     }
 
-    pub fn is_solved(&mut self, reference: Vec<Vec<u16>>) -> bool {
+    pub fn is_solved(&mut self, reference: PContainer) -> bool {
         if self.solved == true {
             return true;
         } else {

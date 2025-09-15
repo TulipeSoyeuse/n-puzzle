@@ -1,7 +1,11 @@
+//! test module
+//!
+//! What we should have done in Transcendance
+
 #[cfg(test)]
 mod tests {
-    use crate::algorithm::heuristics::EHeuristic;
-    use crate::arena::{Mouvement, Point, Puzzle, gen_solved_ref};
+    use crate::heuristics::EHeuristic;
+    use crate::puzzle::{Mouvement, Point, Puzzle, gen_solved_ref};
     use crate::tree::Arena;
     use std::fs::File;
     use std::io::BufReader;
@@ -124,10 +128,12 @@ mod tests {
 
     #[test]
     fn is_solved_test() {
-        let reference = gen_solved_ref(3);
-        let mut puzzle = Puzzle::new(3);
-        puzzle.init_from(&reference).unwrap();
-        assert!(puzzle.is_solved(reference))
+        for dim in 3..8 {
+            let reference = gen_solved_ref(dim);
+            let mut puzzle = Puzzle::new(dim);
+            puzzle.init_from(&reference).unwrap();
+            assert!(puzzle.is_solved(reference))
+        }
     }
 
     #[test]

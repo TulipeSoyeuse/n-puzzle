@@ -1,24 +1,34 @@
+//! Tree
+//!
+//! regroup structure and algorithm to solve a n puzzle
+//!
 use crate::{
-    algorithm::heuristics::{self, PContainer},
-    arena::{Mouvement, Puzzle},
+    heuristics::{EHeuristic, PContainer, set_heuristics},
+    puzzle::{Mouvement, Puzzle},
 };
 use std::fmt::Display;
 use std::rc::Rc;
 
-// Tree
+/// Arena structure
+/// ---------------
+/// hold the ownership of all node and methods
 pub struct Arena {
     pub nodes: Vec<Node>,
     pub solved_node: Option<usize>,
 
-    heuristic: heuristics::EHeuristic,
+    heuristic: EHeuristic,
     reference: Rc<PContainer>,
 
     pub openlist: Vec<usize>,
     pub closelist: Vec<usize>,
 }
 
+/// solving the puzzle use a binary tree to explore all possibility from a certain setup (max 4 new possible state). then the heuristic is used
+/// to calculate how far each new state are, from a resolved state. all NEW states are pushed to an openlist (there are exeption to this :
+/// if a new state is equal to an already explored state for exemple, for this purpose a closelist is used to keep track of all explored states)
+/// then the algorithm find the state in the openlist with the smallest heuristic and repeat this process until the puzzle is solved
 impl Arena {
-    pub fn new(heuristic: heuristics::EHeuristic, reference: Rc<PContainer>) -> Self {
+    pub fn new(heuristic: EHeuristic, reference: Rc<PContainer>) -> Self {
         Arena {
             nodes: vec![],
             openlist: vec![],
@@ -39,6 +49,7 @@ impl Arena {
         self.nodes.len()
     }
 
+    /// generate all states derived from a node (parent_idx) and add to this node children
     pub fn generate_children(&mut self, parent_idx: usize) {
         // already generated check
         if self.nodes[parent_idx].is_children_generated {
@@ -69,7 +80,8 @@ impl Arena {
         self.nodes[parent_idx].is_children_generated = true;
     }
 
-    /// pop the element from openlist
+    /// iter over openlist to find the optimal step, the item is poped from openlist
+    /// and it's index is returned
     fn pick_best_option(&mut self) -> usize {
         let mut res: (usize, u32) = (usize::MAX, u32::MAX);
         let mut i = 0;
@@ -85,6 +97,8 @@ impl Arena {
         res.0
     }
 
+    /// iter over closedlist (I.E all the already explored state) and check if for all children of a parent node
+    /// the state has not already been explored then push it to the openlist
     fn push_to_openlist(&mut self, parent_idx: usize) {
         for child in self.nodes[parent_idx].children.clone() {
             let mut skip_child = false;
@@ -158,7 +172,7 @@ pub struct Node {
     pub state: Puzzle,
 
     pub reference: Rc<PContainer>,
-    pub heuristic: heuristics::EHeuristic,
+    pub heuristic: EHeuristic,
     pub cost: u32,
     pub parent: usize,
 
@@ -169,7 +183,7 @@ pub struct Node {
 impl Node {
     fn new(
         state: Puzzle,
-        heuristic: heuristics::EHeuristic,
+        heuristic: EHeuristic,
         reference: &Rc<PContainer>,
         parent: Option<usize>,
     ) -> Self {
@@ -187,7 +201,7 @@ impl Node {
     }
 
     fn calculate_cost(&mut self) {
-        self.cost = heuristics::set_heuristics(&self.heuristic, &self.state, &self.reference);
+        self.cost = set_heuristics(&self.heuristic, &self.state, &self.reference);
     }
 }
 
