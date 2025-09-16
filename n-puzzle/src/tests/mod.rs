@@ -1,14 +1,14 @@
 //! test module
 //!
 //! What we should have done in Transcendance
-
 #[cfg(test)]
-mod tests {
+mod puzzle_test {
     use crate::heuristics::EHeuristic;
     use crate::puzzle::{Mouvement, Point, Puzzle, gen_solved_ref};
     use crate::tree::Arena;
     use std::fs::File;
     use std::io::BufReader;
+    use std::iter::zip;
     use std::rc::Rc;
 
     #[test]
@@ -147,5 +147,91 @@ mod tests {
         arena.init(puzzle);
         arena.generate_children(0);
         assert_eq!(arena.len(), 5);
+    }
+
+    #[test]
+    fn equivalence_test() {
+        // puzzle 1
+        let f = File::open("src/tests/test_dim3.puzzle").unwrap();
+        let mut puzzle1 = Puzzle::new(3);
+        let _ = puzzle1.init(BufReader::new(f));
+
+        // puzzle 2
+        let f = File::open("src/tests/test_dim3.puzzle").unwrap();
+        let mut puzzle2 = Puzzle::new(3);
+        let _ = puzzle2.init(BufReader::new(f));
+        let _ = puzzle2.up();
+        let _ = puzzle2.down();
+
+        assert_eq!(puzzle1, puzzle2);
+    }
+
+    #[test]
+    fn iter_test() {
+        let f = File::open("src/tests/test_dim3_5mouv.puzzle").unwrap();
+        let mut puzzle = Puzzle::new(3);
+        let _ = puzzle.init(BufReader::new(f));
+
+        let iter_ref: [u16; 8] = [1, 2, 3, 4, 5, 7, 8, 6];
+        let puzzle_iter = puzzle.into_iter();
+
+        for (a, b) in zip(iter_ref, puzzle_iter) {
+            println!("{} : {}", a, b);
+            assert_eq!(a, b);
+        }
+    }
+}
+
+#[cfg(test)]
+mod solving_test {
+    use crate::heuristics::EHeuristic;
+    use crate::puzzle::{Puzzle, gen_solved_ref};
+    use crate::tree::Arena;
+    use crate::tree::Node;
+    use std::fs::File;
+    use std::io::BufReader;
+    use std::rc::Rc;
+
+    fn solve_puzzle(f: File, dim: usize, step: usize) -> Option<Node> {
+        let mut puzzle = Puzzle::new(dim);
+        let _ = puzzle.init(BufReader::new(f)).unwrap();
+        let psref = gen_solved_ref(dim);
+        let mut arena = Arena::new(EHeuristic::EuclidienDistance, Rc::new(psref));
+        arena.init(puzzle);
+        arena.solve_puzzle(step);
+
+        arena.solved_node.map(|v| arena.nodes.remove(v))
+    }
+
+    #[test]
+    fn solvable_dim3_1mouv() {
+        let f = File::open("src/tests/test_dim3_1mouv.puzzle").unwrap();
+        if let Some(v) = solve_puzzle(f, 3, 1) {
+            assert_eq!(v.state.mouv_count, 1);
+        }
+    }
+
+    #[test]
+    fn solvable_dim3_2mouv() {
+        let f = File::open("src/tests/test_dim3_2mouv.puzzle").unwrap();
+        if let Some(v) = solve_puzzle(f, 3, 1) {
+            assert_eq!(v.state.mouv_count, 2);
+        }
+    }
+
+    #[test]
+    fn solvable_dim3_5mouv() {
+        let f = File::open("src/tests/test_dim3_5mouv.puzzle").unwrap();
+        if let Some(v) = solve_puzzle(f, 3, 1) {
+            assert_eq!(v.state.mouv_count, 5);
+        }
+    }
+
+    #[test]
+    fn solvable_dim3_7mouv() {
+        let f = File::open("src/tests/test_dim3_7mouv.puzzle").unwrap();
+        if let Some(v) = solve_puzzle(f, 3, 1) {
+            assert_eq!(v.state.mouv_count, 7);
+        }
     }
 }

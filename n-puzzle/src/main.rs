@@ -30,7 +30,6 @@ fn main() -> std::io::Result<()> {
     let psref = gen_solved_ref(args.size);
     let mut ref_ = Puzzle::new(args.size);
     ref_.init_from(&psref)?;
-    println!("solved reference:\n{}", ref_);
 
     // read and fill puzzle
     if args.file == "stdin" {
@@ -40,6 +39,12 @@ fn main() -> std::io::Result<()> {
         let _ = puzzle.init(BufReader::new(f))?;
     } else {
         println!("No file provided");
+        return Ok(());
+    }
+
+    // is the puzzle solvable ?
+    if !puzzle.is_solvable() {
+        eprintln!("Puzzle not solvable");
         return Ok(());
     }
 
@@ -53,7 +58,7 @@ fn main() -> std::io::Result<()> {
     // solving with binary tree, using an arena system
     arena.init(puzzle);
     arena.solve_puzzle(args.display_step);
-
+    println!("returning");
     arena.display_solution();
     Ok(())
 }

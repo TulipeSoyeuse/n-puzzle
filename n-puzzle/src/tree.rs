@@ -122,11 +122,14 @@ impl Arena {
         let mut current_node_idx = 0;
         let mut counter = 0;
 
+        println!("stating puzzle\n{}", self.nodes[current_node_idx]);
         // A* algorithm loop
         loop {
             counter += 1;
             if counter % step == 0 {
                 println!("loop: {}", counter);
+                println!("openlist size: {}", self.openlist.len());
+                println!("closelist size: {}", self.closelist.len());
                 println!("{}", self.nodes[current_node_idx]);
             }
 

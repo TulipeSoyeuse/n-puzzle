@@ -18,6 +18,43 @@ pub struct Puzzle {
     solved: bool,
 }
 
+pub struct PuzzleIntoIter {
+    puzzle: Puzzle,
+    reference: PContainer,
+    index: u16,
+}
+
+impl PuzzleIntoIter {
+    fn get_coordonates(&self, index: u16) -> Point {
+        let mut reference = Puzzle::new(self.puzzle.dim);
+        let _ = reference.init_from(&self.reference);
+
+        println!("index passed : {}", index);
+        println!("{}", reference);
+        reference.find(index.into())
+    }
+}
+
+impl Iterator for PuzzleIntoIter {
+    type Item = u16;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let dim = self.puzzle.dim;
+        if (self.index as usize) >= dim * dim {
+            None
+        } else {
+            let p = self.get_coordonates(self.index);
+            println!("{:?}", p);
+            self.index += 1;
+            if self.puzzle.puzzle[p.x][p.y] == 0 {
+                self.next()
+            } else {
+                Some(self.puzzle.puzzle[p.x][p.y])
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Point {
     pub x: usize,
@@ -79,6 +116,7 @@ pub fn gen_solved_ref(dim: usize) -> PContainer {
     puzzle_ref
 }
 
+//Todo: implement copy trait
 impl Puzzle {
     pub fn new(dimension: usize) -> Self {
         Puzzle {
@@ -113,6 +151,8 @@ impl Puzzle {
         Point { x, y }
     }
 
+    /// initialise a puzzle element from a T object implementing `io::BufRead`
+    /// Todo: break on wrong input
     pub fn init<T: io::BufRead>(&mut self, mut f: T) -> io::Result<()> {
         if self.init {
             return Err(io::Error::new(
@@ -127,7 +167,7 @@ impl Puzzle {
 
         while f.read_line(&mut buf)? != 0 {
             if buf.starts_with("#") {
-                ()
+                println!("{}", buf);
             } else if first_line {
                 first_line = false;
                 ()
@@ -163,6 +203,24 @@ impl Puzzle {
         } else {
             self.solved = reference == self.puzzle;
             self.solved
+        }
+    }
+
+    pub fn is_solvable(&self) -> bool {
+        let mut inversion = 0;
+        for i in self.clone().into_iter() {
+            for j in self.clone().into_iter() {
+                if i > j {
+                    inversion += 1;
+                };
+            }
+        }
+        println!("number of inversions: {}", inversion);
+        println!("number of dim: {}", self.dim);
+        if self.dim % 2 == 1 {
+            inversion % 2 == 0
+        } else {
+            (self.dim - self.empty_cell.y + inversion) % 2 == 1
         }
     }
 }
@@ -303,6 +361,20 @@ impl PartialEq for Puzzle {
             true
         } else {
             false
+        }
+    }
+}
+
+impl IntoIterator for Puzzle {
+    type Item = u16;
+    type IntoIter = PuzzleIntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let dim = self.dim;
+        PuzzleIntoIter {
+            puzzle: self,
+            reference: gen_solved_ref(dim),
+            index: 1,
         }
     }
 }
