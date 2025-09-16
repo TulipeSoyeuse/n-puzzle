@@ -6,7 +6,7 @@ use crate::puzzle::Puzzle;
 
 pub type PContainer = Vec<Vec<u16>>;
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(PartialEq, Eq, Clone, Debug, Copy)]
 pub enum EHeuristic {
     /// this heuristics returns the number of tiles that are not in their final position.
     HammingDistance,

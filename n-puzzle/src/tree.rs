@@ -6,6 +6,7 @@ use crate::{
     heuristics::{EHeuristic, PContainer, set_heuristics},
     puzzle::{Mouvement, Puzzle},
 };
+use colored::Colorize;
 use std::fmt::Display;
 use std::rc::Rc;
 
@@ -40,7 +41,7 @@ impl Arena {
     }
 
     pub fn init(&mut self, state: Puzzle) {
-        let root = Node::new(state, self.heuristic.clone(), &self.reference, None);
+        let root = Node::new(state, 0, self.heuristic.clone(), &self.reference, None);
         self.nodes.push(root);
     }
 
@@ -67,6 +68,7 @@ impl Arena {
                     let len = self.nodes.len();
                     let node = Node::new(
                         state,
+                        len,
                         self.heuristic.clone(),
                         &self.reference,
                         Some(parent_idx),
@@ -114,25 +116,15 @@ impl Arena {
         }
     }
 
-    pub fn solve_puzzle(&mut self, step: usize) {
+    pub fn solve_puzzle(&mut self) {
         // checking if arena is initialized
         if self.nodes.is_empty() {
             return;
         }
         let mut current_node_idx = 0;
-        let mut counter = 0;
 
-        println!("stating puzzle\n{}", self.nodes[current_node_idx]);
         // A* algorithm loop
         loop {
-            counter += 1;
-            if counter % step == 0 {
-                println!("loop: {}", counter);
-                println!("openlist size: {}", self.openlist.len());
-                println!("closelist size: {}", self.closelist.len());
-                println!("{}", self.nodes[current_node_idx]);
-            }
-
             // solved check
             if self.nodes[current_node_idx]
                 .state
@@ -173,6 +165,7 @@ impl Arena {
 // Node
 pub struct Node {
     pub state: Puzzle,
+    pub id: usize,
 
     pub reference: Rc<PContainer>,
     pub heuristic: EHeuristic,
@@ -186,12 +179,14 @@ pub struct Node {
 impl Node {
     fn new(
         state: Puzzle,
+        id: usize,
         heuristic: EHeuristic,
         reference: &Rc<PContainer>,
         parent: Option<usize>,
     ) -> Self {
         let mut node = Node {
             state,
+            id,
             heuristic,
             cost: 0,
             parent: parent.unwrap_or(0),
@@ -210,12 +205,33 @@ impl Node {
 
 impl Display for Node {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{}", "Puzzle Node")?;
-        write!(f, "{}", self.state)?;
-        writeln!(f, "cost: {}", self.cost)?;
-        writeln!(f, "total: {}", self.cost + self.state.mouv_count as u32)?;
-        writeln!(f, "number of children: {}", self.children.len())?;
-        writeln!(f, "{}", "--------------------".repeat(3))?;
-        Ok(())
+        writeln!(
+            f,
+            "{} {}  ────────────────────────────────────",
+            "Node".bold().cyan(),
+            format!("#{}", self.id).cyan()
+        )?;
+        writeln!(
+            f,
+            "{} {} | {} ({},{}) | {} {} | {} {}",
+            "Move #:".bold(),
+            self.state.mouv_count.to_string().yellow(),
+            "Empty:".bold(),
+            self.state.empty_cell.y,
+            self.state.empty_cell.x,
+            "Cost:".bold(),
+            if self.cost == 0 {
+                self.cost.to_string().green()
+            } else if self.cost < 10 {
+                self.cost.to_string().yellow()
+            } else {
+                self.cost.to_string().red()
+            },
+            "Total:".bold(),
+            (self.cost + self.state.mouv_count as u32)
+                .to_string()
+                .blue()
+        )?;
+        write!(f, "{}", self.state)
     }
 }

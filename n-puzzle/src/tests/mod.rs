@@ -192,13 +192,13 @@ mod solving_test {
     use std::io::BufReader;
     use std::rc::Rc;
 
-    fn solve_puzzle(f: File, dim: usize, step: usize) -> Option<Node> {
+    fn solve_puzzle(f: File, dim: usize) -> Option<Node> {
         let mut puzzle = Puzzle::new(dim);
         let _ = puzzle.init(BufReader::new(f)).unwrap();
         let psref = gen_solved_ref(dim);
         let mut arena = Arena::new(EHeuristic::EuclidienDistance, Rc::new(psref));
         arena.init(puzzle);
-        arena.solve_puzzle(step);
+        arena.solve_puzzle();
 
         arena.solved_node.map(|v| arena.nodes.remove(v))
     }
@@ -206,7 +206,7 @@ mod solving_test {
     #[test]
     fn solvable_dim3_1mouv() {
         let f = File::open("src/tests/test_dim3_1mouv.puzzle").unwrap();
-        if let Some(v) = solve_puzzle(f, 3, 1) {
+        if let Some(v) = solve_puzzle(f, 3) {
             assert_eq!(v.state.mouv_count, 1);
         }
     }
@@ -214,7 +214,7 @@ mod solving_test {
     #[test]
     fn solvable_dim3_2mouv() {
         let f = File::open("src/tests/test_dim3_2mouv.puzzle").unwrap();
-        if let Some(v) = solve_puzzle(f, 3, 1) {
+        if let Some(v) = solve_puzzle(f, 3) {
             assert_eq!(v.state.mouv_count, 2);
         }
     }
@@ -222,7 +222,7 @@ mod solving_test {
     #[test]
     fn solvable_dim3_5mouv() {
         let f = File::open("src/tests/test_dim3_5mouv.puzzle").unwrap();
-        if let Some(v) = solve_puzzle(f, 3, 1) {
+        if let Some(v) = solve_puzzle(f, 3) {
             assert_eq!(v.state.mouv_count, 5);
         }
     }
@@ -230,7 +230,7 @@ mod solving_test {
     #[test]
     fn solvable_dim3_7mouv() {
         let f = File::open("src/tests/test_dim3_7mouv.puzzle").unwrap();
-        if let Some(v) = solve_puzzle(f, 3, 1) {
+        if let Some(v) = solve_puzzle(f, 3) {
             assert_eq!(v.state.mouv_count, 7);
         }
     }

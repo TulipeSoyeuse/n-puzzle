@@ -44,21 +44,17 @@ fn main() -> std::io::Result<()> {
 
     // is the puzzle solvable ?
     if !puzzle.is_solvable() {
-        eprintln!("Puzzle not solvable");
+        eprintln!("Puzzle not solvable..\nQuitting.");
         return Ok(());
     }
 
     // Tree setup
-    let heuristic = match_heuristic(args.heuristic);
-    let mut arena = Arena::new(
-        heuristic.unwrap_or(EHeuristic::EuclidienDistance),
-        Rc::new(psref),
-    );
-
+    let heuristic = match_heuristic(args.heuristic).unwrap_or(EHeuristic::EuclidienDistance);
+    let mut arena = Arena::new(heuristic, Rc::new(psref));
+    println!("solving with heuristic: {:?}", heuristic);
     // solving with binary tree, using an arena system
     arena.init(puzzle);
-    arena.solve_puzzle(args.display_step);
-    println!("returning");
+    arena.solve_puzzle();
     arena.display_solution();
     Ok(())
 }

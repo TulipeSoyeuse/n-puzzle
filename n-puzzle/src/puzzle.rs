@@ -3,11 +3,11 @@
 //! regroup structure and logic for the puzzle itself, including mouvement and helpers
 
 use crate::heuristics::PContainer;
+use colored::*;
 use regex::Regex;
 use std::fmt::Debug;
 use std::fmt::Display;
 use std::io;
-
 #[derive(Debug, Clone)]
 pub struct Puzzle {
     pub puzzle: PContainer,
@@ -29,8 +29,6 @@ impl PuzzleIntoIter {
         let mut reference = Puzzle::new(self.puzzle.dim);
         let _ = reference.init_from(&self.reference);
 
-        println!("index passed : {}", index);
-        println!("{}", reference);
         reference.find(index.into())
     }
 }
@@ -44,7 +42,6 @@ impl Iterator for PuzzleIntoIter {
             None
         } else {
             let p = self.get_coordonates(self.index);
-            println!("{:?}", p);
             self.index += 1;
             if self.puzzle.puzzle[p.x][p.y] == 0 {
                 self.next()
@@ -167,7 +164,6 @@ impl Puzzle {
 
         while f.read_line(&mut buf)? != 0 {
             if buf.starts_with("#") {
-                println!("{}", buf);
             } else if first_line {
                 first_line = false;
                 ()
@@ -208,12 +204,12 @@ impl Puzzle {
 
     pub fn is_solvable(&self) -> bool {
         let mut inversion = 0;
+        let mut prev = 0;
         for i in self.clone().into_iter() {
-            for j in self.clone().into_iter() {
-                if i > j {
-                    inversion += 1;
-                };
+            if i > prev && prev != 0 {
+                inversion += 1;
             }
+            prev = i;
         }
         println!("number of inversions: {}", inversion);
         println!("number of dim: {}", self.dim);
@@ -227,24 +223,33 @@ impl Puzzle {
 
 impl Display for Puzzle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for line in self.puzzle.iter() {
-            writeln!(f, "{}", "--".repeat(self.dim as usize * 4 + 1))?;
-            for element in line {
-                write!(f, "│\t{} ", element)?;
+        let reference = gen_solved_ref(self.dim);
+        for (row_idx, row) in self.puzzle.iter().enumerate() {
+            for _ in 0..self.dim {
+                write!(f, "+---")?;
             }
-            write!(f, "│\n")?;
+            writeln!(f, "+")?;
+
+            // Row content
+            for (col_idx, &element) in row.iter().enumerate() {
+                let is_done = element == reference[row_idx][col_idx];
+                let cell = if element == 0 {
+                    format!(" {} ", "_".blue().bold())
+                } else if is_done {
+                    format!(" {:<2}", element.to_string().green().bold())
+                } else {
+                    format!(" {:<2}", element.to_string().red())
+                };
+                write!(f, "|{}", cell)?;
+            }
+            writeln!(f, "|")?;
         }
-        writeln!(f, "{}", "--".repeat(self.dim as usize * 4 + 1))?;
-        writeln!(
-            f,
-            "mouvement count: {}\ndimension: {}",
-            self.mouv_count, self.dim
-        )?;
-        writeln!(
-            f,
-            "empty cell {{ x:{}, y: {} }}",
-            self.empty_cell.x, self.empty_cell.y
-        )
+
+        // Final bottom border
+        for _ in 0..self.dim {
+            write!(f, "+---")?;
+        }
+        writeln!(f, "+")
     }
 }
 
