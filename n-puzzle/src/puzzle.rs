@@ -29,7 +29,11 @@ impl PuzzleIntoIter {
         let mut reference = Puzzle::new(self.puzzle.dim);
         let _ = reference.init_from(&self.reference);
 
-        reference.find(index.into())
+        if index as usize == self.puzzle.dim * self.puzzle.dim {
+            reference.find(0)
+        } else {
+            reference.find(index.into())
+        }
     }
 }
 
@@ -38,7 +42,7 @@ impl Iterator for PuzzleIntoIter {
 
     fn next(&mut self) -> Option<Self::Item> {
         let dim = self.puzzle.dim;
-        if (self.index as usize) >= dim * dim {
+        if (self.index as usize) > dim * dim {
             None
         } else {
             let p = self.get_coordonates(self.index);
@@ -128,14 +132,10 @@ impl Puzzle {
     }
 
     pub fn find(&self, val: u16) -> Point {
-        if val == 0 {
-            return self.empty_cell.clone();
-        }
-
         let mut x = 0;
         let mut y = 0;
         for (count, line) in self.puzzle.iter().enumerate() {
-            match line.iter().position(|x| *x == val) {
+            match line.iter().position(|&x| x == val) {
                 Some(v) => {
                     x = count;
                     y = v;
@@ -190,9 +190,12 @@ impl Puzzle {
     #[allow(dead_code)]
     pub fn init_from(&mut self, v: &PContainer) -> io::Result<()> {
         self.puzzle = v.clone();
+        self.empty_cell = self.find(0);
         Ok(())
     }
 
+    /// check if self if solved by comparing it to a PContainer reference
+    /// comparing is done by the `PartialEq` trait
     pub fn is_solved(&mut self, reference: PContainer) -> bool {
         if self.solved == true {
             return true;
@@ -202,21 +205,34 @@ impl Puzzle {
         }
     }
 
+    /// check the solvability of a puzzle
     pub fn is_solvable(&self) -> bool {
         let mut inversion = 0;
-        let mut prev = 0;
-        for i in self.clone().into_iter() {
-            if i > prev && prev != 0 {
-                inversion += 1;
+        let tiles: Vec<u16> = self.clone().into_iter().collect();
+        for i in 0..tiles.len() {
+            for j in (i + 1)..tiles.len() {
+                if tiles[i] > tiles[j] {
+                    inversion += 1;
+                }
             }
-            prev = i;
         }
         println!("number of inversions: {}", inversion);
-        println!("number of dim: {}", self.dim);
         if self.dim % 2 == 1 {
+            println!("dimension is odd");
             inversion % 2 == 0
         } else {
-            (self.dim - self.empty_cell.y + inversion) % 2 == 1
+            println!(
+                "dimension is even and dimension {} - empty_cell row {} - 1 + inversion {} is {}",
+                self.dim,
+                self.empty_cell.x,
+                inversion,
+                if (self.dim - self.empty_cell.x - 1 + inversion) % 2 == 1 {
+                    "odd"
+                } else {
+                    "even"
+                }
+            );
+            (self.dim - self.empty_cell.x + inversion) % 2 == 0
         }
     }
 }

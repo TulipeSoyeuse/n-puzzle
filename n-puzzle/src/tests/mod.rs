@@ -168,11 +168,39 @@ mod puzzle_test {
 
     #[test]
     fn iter_test() {
-        let f = File::open("src/tests/test_dim3_5mouv.puzzle").unwrap();
+        let f = File::open("src/tests/test_dim3_7mouv.puzzle").unwrap();
         let mut puzzle = Puzzle::new(3);
         let _ = puzzle.init(BufReader::new(f));
 
-        let iter_ref: [u16; 8] = [1, 2, 3, 4, 5, 7, 8, 6];
+        let iter_ref = [8, 1, 3, 5, 6, 7, 2, 4];
+        let puzzle_iter = puzzle.into_iter();
+
+        for (a, b) in zip(iter_ref, puzzle_iter) {
+            println!("{} : {}", a, b);
+            assert_eq!(a, b);
+        }
+
+        // dim 4 test
+        let f = File::open("src/tests/test_inversion_dim4.puzzle").unwrap();
+        let mut puzzle = Puzzle::new(4);
+        let _ = puzzle.init(BufReader::new(f));
+
+        let iter_ref = [12, 5, 7, 2, 4, 10, 13, 15, 3, 11, 6, 1, 14, 9, 8];
+        let puzzle_iter = puzzle.into_iter();
+
+        for (a, b) in zip(iter_ref, puzzle_iter) {
+            println!("{} : {}", a, b);
+            assert_eq!(a, b);
+        }
+
+        // dim 5 test
+        let f = File::open("src/tests/test_inversion_dim5.puzzle").unwrap();
+        let mut puzzle = Puzzle::new(5);
+        let _ = puzzle.init(BufReader::new(f));
+
+        let iter_ref = [
+            18, 11, 22, 15, 21, 20, 6, 4, 17, 24, 16, 14, 13, 12, 8, 5, 7, 3, 9, 1, 19, 10, 2, 23,
+        ];
         let puzzle_iter = puzzle.into_iter();
 
         for (a, b) in zip(iter_ref, puzzle_iter) {
@@ -190,7 +218,56 @@ mod solving_test {
     use crate::tree::Node;
     use std::fs::File;
     use std::io::BufReader;
+    use std::process::{Command, Stdio};
     use std::rc::Rc;
+
+    #[test]
+    fn test_iter_solvability_solvable_case_dim3() {
+        for _ in 0..50 {
+            // command setup and capture output ---------------------------------
+            let dim = 3;
+            let dimstr = dim.to_string();
+            let mut child = Command::new("python")
+                .args(["../npuzzle-gen.py", "-s", &dimstr])
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
+            let output = child.stdout.take().unwrap();
+            let reader = BufReader::new(output);
+
+            // puzzle init and check solvability ---------------------------------
+            let mut puzzle = Puzzle::new(dim);
+            let _ = puzzle.init(reader);
+            println!("{}", puzzle);
+            let res = puzzle.is_solvable();
+            println!("{}", res);
+            assert!(res);
+        }
+    }
+
+    #[test]
+    fn test_iter_solvability_solvable_case_dim4() {
+        for _ in 0..50 {
+            // command setup and capture output ---------------------------------
+            let dim = 4;
+            let dimstr = dim.to_string();
+            let mut child = Command::new("python")
+                .args(["../npuzzle-gen.py", "-s", &dimstr])
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
+            let output = child.stdout.take().unwrap();
+            let reader = BufReader::new(output);
+
+            // puzzle init and check solvability ---------------------------------
+            let mut puzzle = Puzzle::new(dim);
+            let _ = puzzle.init(reader);
+            println!("{}", puzzle);
+            let res = puzzle.is_solvable();
+            println!("{}", res);
+            assert!(res);
+        }
+    }
 
     fn solve_puzzle(f: File, dim: usize) -> Option<Node> {
         let mut puzzle = Puzzle::new(dim);
@@ -198,7 +275,7 @@ mod solving_test {
         let psref = gen_solved_ref(dim);
         let mut arena = Arena::new(EHeuristic::EuclidienDistance, Rc::new(psref));
         arena.init(puzzle);
-        arena.solve_puzzle();
+        arena.solve_puzzle().unwrap();
 
         arena.solved_node.map(|v| arena.nodes.remove(v))
     }

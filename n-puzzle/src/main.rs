@@ -1,10 +1,12 @@
 mod cli;
+mod error;
 mod heuristics;
 mod puzzle;
 mod tests;
 mod tree;
 
 use crate::cli::Args;
+use crate::error::AppError;
 use clap::Parser;
 use heuristics::EHeuristic;
 use puzzle::{Puzzle, gen_solved_ref};
@@ -21,7 +23,7 @@ fn match_heuristic(flag: String) -> Result<EHeuristic, ()> {
     }
 }
 
-fn main() -> std::io::Result<()> {
+fn main() -> Result<(), AppError> {
     // read arg, init puzzle
     let args = Args::parse();
     let mut puzzle = Puzzle::new(args.size);
@@ -38,14 +40,13 @@ fn main() -> std::io::Result<()> {
         let f = File::open(args.file)?;
         let _ = puzzle.init(BufReader::new(f))?;
     } else {
-        println!("No file provided");
-        return Ok(());
+        return Err(AppError::new("no file provided"));
     }
+    println!("{}", puzzle);
 
     // is the puzzle solvable ?
     if !puzzle.is_solvable() {
-        eprintln!("Puzzle not solvable..\nQuitting.");
-        return Ok(());
+        return Err(AppError::new("Puzzle not solvable.."));
     }
 
     // Tree setup
@@ -54,7 +55,7 @@ fn main() -> std::io::Result<()> {
     println!("solving with heuristic: {:?}", heuristic);
     // solving with binary tree, using an arena system
     arena.init(puzzle);
-    arena.solve_puzzle();
+    arena.solve_puzzle()?;
     arena.display_solution();
     Ok(())
 }

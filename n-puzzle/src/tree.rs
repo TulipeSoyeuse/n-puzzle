@@ -3,6 +3,7 @@
 //! regroup structure and algorithm to solve a n puzzle
 //!
 use crate::{
+    error::AppError,
     heuristics::{EHeuristic, PContainer, set_heuristics},
     puzzle::{Mouvement, Puzzle},
 };
@@ -116,10 +117,10 @@ impl Arena {
         }
     }
 
-    pub fn solve_puzzle(&mut self) {
+    pub fn solve_puzzle(&mut self) -> Result<(), AppError> {
         // checking if arena is initialized
         if self.nodes.is_empty() {
-            return;
+            return Err(AppError::new("tree is empty"));
         }
         let mut current_node_idx = 0;
 
@@ -131,7 +132,7 @@ impl Arena {
                 .is_solved(self.reference.to_vec())
             {
                 self.solved_node = Some(current_node_idx);
-                return;
+                return Ok(());
             }
 
             // children generation of current
