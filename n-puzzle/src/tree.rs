@@ -86,13 +86,13 @@ impl Arena {
     /// iter over openlist to find the optimal step, the item is poped from openlist
     /// and it's index is returned
     fn pick_best_option(&mut self) -> usize {
-        let mut res: (usize, u32) = (usize::MAX, u32::MAX);
+        let mut res: (usize, usize) = (usize::MAX, usize::MAX);
         let mut i = 0;
         for (_i, idx) in self.openlist.iter().enumerate() {
             let node = &self.nodes[*idx];
-            if node.state.mouv_count as u32 + node.cost < res.1 {
+            if node.state.mouv_count + node.cost < res.1 {
                 res.0 = *idx;
-                res.1 = node.state.mouv_count as u32 + node.cost;
+                res.1 = node.state.mouv_count + node.cost;
                 i = _i;
             }
         }
@@ -170,7 +170,7 @@ pub struct Node {
 
     pub reference: Rc<PContainer>,
     pub heuristic: EHeuristic,
-    pub cost: u32,
+    pub cost: usize,
     pub parent: usize,
 
     pub children: Vec<usize>,
@@ -229,9 +229,7 @@ impl Display for Node {
                 self.cost.to_string().red()
             },
             "Total:".bold(),
-            (self.cost + self.state.mouv_count as u32)
-                .to_string()
-                .blue()
+            (self.cost + self.state.mouv_count).to_string().blue()
         )?;
         write!(f, "{}", self.state)
     }

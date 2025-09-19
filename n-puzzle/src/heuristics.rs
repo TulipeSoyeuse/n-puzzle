@@ -15,7 +15,7 @@ pub enum EHeuristic {
     EuclidienDistance,
 }
 
-fn hamming_distance(p: &Puzzle, reference: &PContainer) -> u32 {
+fn hamming_distance(p: &Puzzle, reference: &PContainer) -> usize {
     let mut counter = 0;
 
     for i in 0..p.dim {
@@ -29,22 +29,22 @@ fn hamming_distance(p: &Puzzle, reference: &PContainer) -> u32 {
     counter
 }
 
-fn euclidian_distance(p: &Puzzle, reference: &PContainer) -> u32 {
+fn euclidian_distance(p: &Puzzle, reference: &PContainer) -> usize {
     let mut counter = 0;
 
     for i in 0..p.dim {
         for j in 0..p.dim {
             if p.puzzle[i][j] != reference[i][j] {
                 let reference_position = p.find(reference[i][j]);
-                counter += i.abs_diff(reference_position.x) as u32;
-                counter += j.abs_diff(reference_position.y) as u32;
+                counter += i.abs_diff(reference_position.x);
+                counter += j.abs_diff(reference_position.y);
             }
         }
     }
     counter
 }
 
-pub fn set_heuristics(heuristic: &EHeuristic, p: &Puzzle, reference: &PContainer) -> u32 {
+pub fn set_heuristics(heuristic: &EHeuristic, p: &Puzzle, reference: &PContainer) -> usize {
     if heuristic == &EHeuristic::HammingDistance {
         hamming_distance(p, &reference)
     } else if heuristic == &EHeuristic::EuclidienDistance {

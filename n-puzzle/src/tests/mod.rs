@@ -218,56 +218,7 @@ mod solving_test {
     use crate::tree::Node;
     use std::fs::File;
     use std::io::BufReader;
-    use std::process::{Command, Stdio};
     use std::rc::Rc;
-
-    #[test]
-    fn test_iter_solvability_solvable_case_dim3() {
-        for _ in 0..50 {
-            // command setup and capture output ---------------------------------
-            let dim = 3;
-            let dimstr = dim.to_string();
-            let mut child = Command::new("python")
-                .args(["../npuzzle-gen.py", "-s", &dimstr])
-                .stdout(Stdio::piped())
-                .spawn()
-                .unwrap();
-            let output = child.stdout.take().unwrap();
-            let reader = BufReader::new(output);
-
-            // puzzle init and check solvability ---------------------------------
-            let mut puzzle = Puzzle::new(dim);
-            let _ = puzzle.init(reader);
-            println!("{}", puzzle);
-            let res = puzzle.is_solvable();
-            println!("{}", res);
-            assert!(res);
-        }
-    }
-
-    #[test]
-    fn test_iter_solvability_solvable_case_dim4() {
-        for _ in 0..50 {
-            // command setup and capture output ---------------------------------
-            let dim = 4;
-            let dimstr = dim.to_string();
-            let mut child = Command::new("python")
-                .args(["../npuzzle-gen.py", "-s", &dimstr])
-                .stdout(Stdio::piped())
-                .spawn()
-                .unwrap();
-            let output = child.stdout.take().unwrap();
-            let reader = BufReader::new(output);
-
-            // puzzle init and check solvability ---------------------------------
-            let mut puzzle = Puzzle::new(dim);
-            let _ = puzzle.init(reader);
-            println!("{}", puzzle);
-            let res = puzzle.is_solvable();
-            println!("{}", res);
-            assert!(res);
-        }
-    }
 
     fn solve_puzzle(f: File, dim: usize) -> Option<Node> {
         let mut puzzle = Puzzle::new(dim);
@@ -309,6 +260,189 @@ mod solving_test {
         let f = File::open("src/tests/test_dim3_7mouv.puzzle").unwrap();
         if let Some(v) = solve_puzzle(f, 3) {
             assert_eq!(v.state.mouv_count, 7);
+        }
+    }
+}
+
+#[cfg(test)]
+mod solvability {
+    use crate::puzzle::Puzzle;
+    use std::io::BufReader;
+    use std::process::{Command, Stdio};
+
+    #[test]
+    fn test_solvable_case_dim3() {
+        for _ in 0..50 {
+            // command setup and capture output ---------------------------------
+            let dim = 3;
+            let dimstr = dim.to_string();
+            let mut child = Command::new("python")
+                .args(["../npuzzle-gen.py", "-s", &dimstr])
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
+            let output = child.stdout.take().unwrap();
+            let reader = BufReader::new(output);
+
+            // puzzle init and check solvability ---------------------------------
+            let mut puzzle = Puzzle::new(dim);
+            let _ = puzzle.init(reader);
+            println!("{}", puzzle);
+            assert!(puzzle.is_solvable());
+        }
+    }
+
+    #[test]
+    fn test_solvable_case_dim4() {
+        for _ in 0..50 {
+            // command setup and capture output ---------------------------------
+            let dim = 4;
+            let dimstr = dim.to_string();
+            let mut child = Command::new("python")
+                .args(["../npuzzle-gen.py", "-s", &dimstr])
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
+            let output = child.stdout.take().unwrap();
+            let reader = BufReader::new(output);
+
+            // puzzle init and check solvability ---------------------------------
+            let mut puzzle = Puzzle::new(dim);
+            let _ = puzzle.init(reader);
+            println!("{}", puzzle);
+            assert!(puzzle.is_solvable());
+        }
+    }
+
+    #[test]
+    fn test_solvable_case_dim5() {
+        for _ in 0..50 {
+            // command setup and capture output ---------------------------------
+            let dim = 5;
+            let dimstr = dim.to_string();
+            let mut child = Command::new("python")
+                .args(["../npuzzle-gen.py", "-s", &dimstr])
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
+            let output = child.stdout.take().unwrap();
+            let reader = BufReader::new(output);
+
+            // puzzle init and check solvability ---------------------------------
+            let mut puzzle = Puzzle::new(dim);
+            let _ = puzzle.init(reader);
+            println!("{}", puzzle);
+            assert!(puzzle.is_solvable());
+        }
+    }
+
+    #[test]
+    fn test_solvable_case_dim6() {
+        for _ in 0..50 {
+            // command setup and capture output ---------------------------------
+            let dim = 6;
+            let dimstr = dim.to_string();
+            let mut child = Command::new("python")
+                .args(["../npuzzle-gen.py", "-s", &dimstr])
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
+            let output = child.stdout.take().unwrap();
+            let reader = BufReader::new(output);
+
+            // puzzle init and check solvability ---------------------------------
+            let mut puzzle = Puzzle::new(dim);
+            let _ = puzzle.init(reader);
+            println!("{}", puzzle);
+            assert!(puzzle.is_solvable());
+        }
+    }
+
+    #[test]
+    fn test_unsolvable_case_dim3() {
+        for _ in 0..50 {
+            // command setup and capture output ---------------------------------
+            let dim = 3;
+            let dimstr = dim.to_string();
+            let mut child = Command::new("python")
+                .args(["../npuzzle-gen.py", "-u", &dimstr])
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
+            let output = child.stdout.take().unwrap();
+            let reader = BufReader::new(output);
+
+            // puzzle init and check solvability ---------------------------------
+            let mut puzzle = Puzzle::new(dim);
+            let _ = puzzle.init(reader);
+            println!("{}", puzzle);
+            assert!(!puzzle.is_solvable());
+        }
+    }
+
+    #[test]
+    fn test_unsolvable_case_dim4() {
+        for _ in 0..50 {
+            // command setup and capture output ---------------------------------
+            let dim = 4;
+            let dimstr = dim.to_string();
+            let mut child = Command::new("python")
+                .args(["../npuzzle-gen.py", "-u", &dimstr])
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
+            let output = child.stdout.take().unwrap();
+            let reader = BufReader::new(output);
+
+            // puzzle init and check solvability ---------------------------------
+            let mut puzzle = Puzzle::new(dim);
+            let _ = puzzle.init(reader);
+            println!("{}", puzzle);
+            assert!(!puzzle.is_solvable());
+        }
+    }
+
+    #[test]
+    fn test_unsolvable_case_dim5() {
+        for _ in 0..50 {
+            // command setup and capture output ---------------------------------
+            let dim = 5;
+            let dimstr = dim.to_string();
+            let mut child = Command::new("python")
+                .args(["../npuzzle-gen.py", "-u", &dimstr])
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
+            let output = child.stdout.take().unwrap();
+            let reader = BufReader::new(output);
+
+            // puzzle init and check solvability ---------------------------------
+            let mut puzzle = Puzzle::new(dim);
+            let _ = puzzle.init(reader);
+            println!("{}", puzzle);
+            assert!(!puzzle.is_solvable());
+        }
+    }
+
+    #[test]
+    fn test_unsolvable_case_dim6() {
+        for _ in 0..50 {
+            // command setup and capture output ---------------------------------
+            let dim = 6;
+            let dimstr = dim.to_string();
+            let mut child = Command::new("python")
+                .args(["../npuzzle-gen.py", "-u", &dimstr])
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
+            let output = child.stdout.take().unwrap();
+            let reader = BufReader::new(output);
+
+            // puzzle init and check solvability ---------------------------------
+            let mut puzzle = Puzzle::new(dim);
+            let _ = puzzle.init(reader);
+            println!("{}", puzzle);
+            assert!(!puzzle.is_solvable());
         }
     }
 }

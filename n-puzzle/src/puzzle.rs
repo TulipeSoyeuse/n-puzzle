@@ -205,6 +205,16 @@ impl Puzzle {
         }
     }
 
+    fn distance(&self) -> usize {
+        let mut reference = Puzzle::new(self.dim);
+        let _ = reference.init_from(&gen_solved_ref(self.dim));
+        let mut counter = 0;
+        counter += reference.empty_cell.x.abs_diff(self.empty_cell.x);
+        counter += reference.empty_cell.y.abs_diff(self.empty_cell.y);
+
+        counter
+    }
+
     /// check the solvability of a puzzle
     pub fn is_solvable(&self) -> bool {
         let mut inversion = 0;
@@ -221,18 +231,13 @@ impl Puzzle {
             println!("dimension is odd");
             inversion % 2 == 0
         } else {
+            let distance = self.distance();
             println!(
-                "dimension is even and dimension {} - empty_cell row {} - 1 + inversion {} is {}",
-                self.dim,
-                self.empty_cell.x,
-                inversion,
-                if (self.dim - self.empty_cell.x - 1 + inversion) % 2 == 1 {
-                    "odd"
-                } else {
-                    "even"
-                }
+                "blank block distance from goal: {} -> {}",
+                distance,
+                if distance % 2 == 1 { "odd" } else { "even" }
             );
-            (self.dim - self.empty_cell.x + inversion) % 2 == 0
+            inversion % 2 == distance % 2
         }
     }
 }
