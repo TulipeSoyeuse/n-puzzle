@@ -1,19 +1,18 @@
-use colored::{ColoredString, Colorize};
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
 use std::io;
 
 #[derive(Debug)]
 pub struct AppError {
-    kind: ColoredString,
-    message: ColoredString,
+    kind: String,
+    message: String,
 }
 
 impl AppError {
-    pub fn new(message: &str) -> Self {
+    pub fn new(message: &'static str) -> Self {
         AppError {
-            kind: "Application Error".bold().red(),
-            message: message.white(),
+            kind: String::from("Application Error"),
+            message: String::from(message),
         }
     }
 }
@@ -27,8 +26,8 @@ impl Display for AppError {
 impl From<io::Error> for AppError {
     fn from(error: io::Error) -> Self {
         AppError {
-            kind: String::from("io").bold().red(),
-            message: error.to_string().white(),
+            kind: String::from("io"),
+            message: error.to_string(),
         }
     }
 }

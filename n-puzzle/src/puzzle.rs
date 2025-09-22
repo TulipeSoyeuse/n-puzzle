@@ -187,7 +187,6 @@ impl Puzzle {
         Ok(())
     }
 
-    #[allow(dead_code)]
     pub fn init_from(&mut self, v: &PContainer) -> io::Result<()> {
         self.puzzle = v.clone();
         self.empty_cell = self.find(0);
@@ -205,18 +204,36 @@ impl Puzzle {
         }
     }
 
-    fn distance(&self) -> usize {
+    fn set_neutral(&mut self) {
         let mut reference = Puzzle::new(self.dim);
         let _ = reference.init_from(&gen_solved_ref(self.dim));
-        let mut counter = 0;
-        counter += reference.empty_cell.x.abs_diff(self.empty_cell.x);
-        counter += reference.empty_cell.y.abs_diff(self.empty_cell.y);
 
-        counter
+        // reset in x
+        let mouvs = reference.empty_cell.x as i32 - self.empty_cell.x as i32;
+        if mouvs < 0 {
+            for _ in mouvs..0 {
+                let _ = self.up();
+            }
+        } else {
+            for _ in 0..mouvs {
+                let _ = self.down();
+            }
+        }
+
+        // reset in y
+        let mouvs = reference.empty_cell.y as i32 - self.empty_cell.y as i32;
+        if mouvs < 0 {
+            for _ in mouvs..0 {
+                let _ = self.left();
+            }
+        } else {
+            for _ in 0..mouvs {
+                let _ = self.right();
+            }
+        };
     }
 
-    /// check the solvability of a puzzle
-    pub fn is_solvable(&self) -> bool {
+    fn inversion_counter(&self) -> usize {
         let mut inversion = 0;
         let tiles: Vec<u16> = self.clone().into_iter().collect();
         for i in 0..tiles.len() {
@@ -226,19 +243,16 @@ impl Puzzle {
                 }
             }
         }
+        inversion
+    }
+
+    /// check the solvability of a puzzle
+    pub fn is_solvable(&self) -> bool {
+        let mut clone_ = self.clone();
+        clone_.set_neutral();
+        let inversion = clone_.inversion_counter();
         println!("number of inversions: {}", inversion);
-        if self.dim % 2 == 1 {
-            println!("dimension is odd");
-            inversion % 2 == 0
-        } else {
-            let distance = self.distance();
-            println!(
-                "blank block distance from goal: {} -> {}",
-                distance,
-                if distance % 2 == 1 { "odd" } else { "even" }
-            );
-            inversion % 2 == distance % 2
-        }
+        inversion % 2 == 0
     }
 }
 
