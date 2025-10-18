@@ -132,7 +132,7 @@ mod puzzle_test {
             let reference = gen_solved_ref(dim);
             let mut puzzle = Puzzle::new(dim);
             puzzle.init_from(&reference).unwrap();
-            assert!(puzzle.is_solved(reference))
+            assert!(puzzle.is_solved(&reference))
         }
     }
 
@@ -224,9 +224,9 @@ mod solving_test {
         let mut puzzle = Puzzle::new(dim);
         let _ = puzzle.init(BufReader::new(f)).unwrap();
         let psref = gen_solved_ref(dim);
-        let mut arena = Arena::new(EHeuristic::EuclidienDistance, Rc::new(psref));
+        let mut arena = Arena::new(EHeuristic::ManhattanDistance, Rc::new(psref));
         arena.init(puzzle);
-        arena.solve_puzzle().unwrap();
+        arena.solve_puzzle(true).unwrap();
 
         arena.solved_node.map(|v| arena.nodes.remove(v))
     }
@@ -443,6 +443,36 @@ mod solvability {
             let _ = puzzle.init(reader);
             println!("{}", puzzle);
             assert!(!puzzle.is_solvable());
+        }
+    }
+}
+
+#[cfg(test)]
+mod generate_test {
+    use crate::puzzle::{Puzzle, gen_solved_ref};
+
+    #[test]
+    fn base_generation_dim3_solvable() {
+        let psref = gen_solved_ref(3);
+        let mut puzzle = Puzzle::new(3);
+        match puzzle.generate(0, true, &psref) {
+            Ok(()) => {
+                assert!(puzzle.is_solvable());
+                assert!(puzzle.is_solved(&gen_solved_ref(3)));
+            }
+            Err(_) => panic!(),
+        }
+    }
+
+    #[test]
+    fn base_generation_dim3_unsolvable() {
+        let psref = gen_solved_ref(3);
+        let mut puzzle = Puzzle::new(3);
+        match puzzle.generate(0, false, &psref) {
+            Ok(()) => {
+                assert!(!puzzle.is_solvable());
+            }
+            Err(_) => panic!(),
         }
     }
 }

@@ -7,9 +7,15 @@ use crate::{
     heuristics::{EHeuristic, PContainer, set_heuristics},
     puzzle::{Mouvement, Puzzle},
 };
+
 use colored::Colorize;
 use std::fmt::Display;
 use std::rc::Rc;
+
+struct OpenlistEntry {
+    cost: usize,
+    node_index: usize,
+}
 
 /// Arena structure
 /// ---------------
@@ -104,32 +110,34 @@ impl Arena {
     /// the state has not already been explored then push it to the openlist
     fn push_to_openlist(&mut self, parent_idx: usize) {
         for child in self.nodes[parent_idx].children.clone() {
-            let mut skip_child = false;
-            for closelist_idx in self.closelist.iter() {
-                if self.nodes[child].state == self.nodes[*closelist_idx].state {
-                    skip_child = true;
-                    break;
-                }
-            }
-            if !skip_child {
-                self.openlist.push(child);
-            }
+            // let mut skip_child = false;
+            // for closelist_idx in self.closelist.iter() {
+            //     if self.nodes[child].state == self.nodes[*closelist_idx].state {
+            //         skip_child = true;
+            //         break;
+            //     }
+            // }
+            // if !skip_child {
+            self.openlist.push(child);
+            // }
         }
     }
 
-    pub fn solve_puzzle(&mut self) -> Result<(), AppError> {
+    pub fn solve_puzzle(&mut self, debug: bool) -> Result<(), AppError> {
         // checking if arena is initialized
         if self.nodes.is_empty() {
             return Err(AppError::new("tree is empty"));
         }
         let mut current_node_idx = 0;
 
+        let mut counter: usize = 0;
         // A* algorithm loop
         loop {
+            counter += 1;
             // solved check
             if self.nodes[current_node_idx]
                 .state
-                .is_solved(self.reference.to_vec())
+                .is_solved(&*self.reference)
             {
                 self.solved_node = Some(current_node_idx);
                 return Ok(());
@@ -142,13 +150,19 @@ impl Arena {
 
             // pick the new current
             current_node_idx = self.pick_best_option();
+
+            if debug && counter % 1000 == 0 {
+                println!(
+                    "dedug mode.. Display current node every 1000 step:\n{}",
+                    self.nodes[current_node_idx]
+                );
+            }
         }
     }
 
     pub fn display_solution(&self) {
         match self.solved_node {
             Some(mut idx) => {
-                println!("solution: ");
                 let mut path = Vec::new();
                 while idx != 0 {
                     path.push(idx);

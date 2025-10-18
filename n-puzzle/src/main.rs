@@ -15,16 +15,16 @@ use std::io::{BufReader, stdin};
 use std::rc::Rc;
 use tree::Arena;
 
-fn match_heuristic(flag: String) -> Result<EHeuristic, ()> {
+fn match_heuristic(flag: String) -> Result<EHeuristic, AppError> {
     match flag.as_str() {
         "hd" => Ok(EHeuristic::HammingDistance),
-        "ed" => Ok(EHeuristic::EuclidienDistance),
-        _ => Err(()),
+        "md" => Ok(EHeuristic::ManhattanDistance),
+        _ => Err(AppError::new("unkown heuristic")),
     }
 }
 
 fn main() -> Result<(), AppError> {
-    // read arg, init puzzle
+    // read arg, create puzzle
     let args = Args::parse();
     let mut puzzle = Puzzle::new(args.size);
 
@@ -34,28 +34,30 @@ fn main() -> Result<(), AppError> {
     ref_.init_from(&psref)?;
 
     // read and fill puzzle
-    if args.file == "stdin" {
-        let _ = puzzle.init(stdin().lock())?;
-    } else if !args.file.is_empty() {
-        let f = File::open(args.file)?;
-        let _ = puzzle.init(BufReader::new(f))?;
+    if let Some(file) = args.file {
+        if file.to_str() == Some("stdin") {
+            let _ = puzzle.init(stdin().lock())?;
+        } else {
+            let f = File::open(file)?;
+            let _ = puzzle.init(BufReader::new(f))?;
+        }
     } else {
-        return Err(AppError::new("no file provided"));
+        let _ = puzzle.generate(args.iterations, args.solvable, &psref)?;
     }
-    println!("{}", puzzle);
 
     // is the puzzle solvable ?
     if !puzzle.is_solvable() {
-        return Err(AppError::new("Puzzle not solvable.."));
+        println!("puzzle not salvable");
+        return Ok(());
     }
 
     // Tree setup
-    let heuristic = match_heuristic(args.heuristic).unwrap_or(EHeuristic::EuclidienDistance);
+    let heuristic = match_heuristic(args.heuristic)?;
     let mut arena = Arena::new(heuristic, Rc::new(psref));
     println!("solving with heuristic: {:?}", heuristic);
     // solving with binary tree, using an arena system
     arena.init(puzzle);
-    arena.solve_puzzle()?;
+    arena.solve_puzzle(args.debug)?;
     arena.display_solution();
     Ok(())
 }

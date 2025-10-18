@@ -2,8 +2,10 @@
 //!
 //! regroup structure and logic for the puzzle itself, including mouvement and helpers
 
+use crate::error::AppError;
 use crate::heuristics::PContainer;
 use colored::*;
+use rand::prelude::*;
 use regex::Regex;
 use std::fmt::Debug;
 use std::fmt::Display;
@@ -56,7 +58,7 @@ impl Iterator for PuzzleIntoIter {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Point {
     pub x: usize,
     pub y: usize,
@@ -131,6 +133,55 @@ impl Puzzle {
         }
     }
 
+    pub fn generate(
+        &mut self,
+        mut iterations: u16,
+        solvable: bool,
+        reference: &PContainer,
+    ) -> Result<(), AppError> {
+        let mut rng = rand::rng();
+
+        self.init_from(reference)?;
+
+        let mut retry = false;
+        if !solvable {
+            println!("generate unsolvable puzzle");
+            self.puzzle[0][0] = 2;
+            self.puzzle[0][1] = 1;
+        } else {
+            println!("generate solvable puzzle");
+        }
+
+        while iterations != 0 {
+            let a = rng.random::<u8>() % 4;
+            //println!("a: {}", a);
+            match a {
+                0 => self.up().unwrap_or_else(|_| retry = true),
+                1 => self.down().unwrap_or_else(|_| retry = true),
+                2 => self.left().unwrap_or_else(|_| retry = true),
+                _ => self.right().unwrap_or_else(|_| retry = true),
+            };
+            // if the mouvement couldn't be acheved
+            if retry {
+                let mut b = a;
+                while retry {
+                    b = (b + 1) % 4;
+                    retry = false;
+                    match b {
+                        0 => self.up().unwrap_or_else(|_| retry = true),
+                        1 => self.down().unwrap_or_else(|_| retry = true),
+                        2 => self.left().unwrap_or_else(|_| retry = true),
+                        _ => self.right().unwrap_or_else(|_| retry = true),
+                    };
+                }
+            }
+            iterations -= 1;
+            //println!("{}", self);
+        }
+        self.mouv_count = 0;
+        Ok(())
+    }
+
     pub fn find(&self, val: u16) -> Point {
         let mut x = 0;
         let mut y = 0;
@@ -187,7 +238,10 @@ impl Puzzle {
         Ok(())
     }
 
-    pub fn init_from(&mut self, v: &PContainer) -> io::Result<()> {
+    pub fn init_from(&mut self, v: &PContainer) -> Result<(), AppError> {
+        if self.init {
+            return Err(AppError::new("Puzzle already initialized"));
+        }
         self.puzzle = v.clone();
         self.empty_cell = self.find(0);
         Ok(())
@@ -195,11 +249,11 @@ impl Puzzle {
 
     /// check if self if solved by comparing it to a PContainer reference
     /// comparing is done by the `PartialEq` trait
-    pub fn is_solved(&mut self, reference: PContainer) -> bool {
+    pub fn is_solved(&mut self, reference: &PContainer) -> bool {
         if self.solved == true {
             return true;
         } else {
-            self.solved = reference == self.puzzle;
+            self.solved = *reference == self.puzzle;
             self.solved
         }
     }
@@ -251,7 +305,6 @@ impl Puzzle {
         let mut clone_ = self.clone();
         clone_.set_neutral();
         let inversion = clone_.inversion_counter();
-        println!("number of inversions: {}", inversion);
         inversion % 2 == 0
     }
 }
@@ -387,6 +440,7 @@ impl Mouvement for Puzzle {
 
 use std::cmp::PartialEq;
 use std::ops::Index;
+use std::u8;
 
 impl PartialEq for Puzzle {
     fn eq(&self, other: &Self) -> bool {
