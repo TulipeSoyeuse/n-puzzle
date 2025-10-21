@@ -9,12 +9,25 @@ use crate::{
 };
 
 use colored::Colorize;
-use std::fmt::Display;
-use std::rc::Rc;
+use std::{collections::BinaryHeap, rc::Rc};
+use std::{collections::HashSet, fmt::Display};
 
-struct OpenlistEntry {
+#[derive(PartialEq, Eq)]
+pub struct OpenlistEntry {
     cost: usize,
     node_index: usize,
+}
+
+impl PartialOrd for OpenlistEntry {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for OpenlistEntry {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.cost.cmp(&self.cost)
+    }
 }
 
 /// Arena structure
@@ -27,8 +40,8 @@ pub struct Arena {
     heuristic: EHeuristic,
     reference: Rc<PContainer>,
 
-    pub openlist: Vec<usize>,
-    pub closelist: Vec<usize>,
+    pub openlist: BinaryHeap<OpenlistEntry>,
+    pub closelist: HashSet<Puzzle>,
 }
 
 /// solving the puzzle use a binary tree to explore all possibility from a certain setup (max 4 new possible state). then the heuristic is used
@@ -39,8 +52,8 @@ impl Arena {
     pub fn new(heuristic: EHeuristic, reference: Rc<PContainer>) -> Self {
         Arena {
             nodes: vec![],
-            openlist: vec![],
-            closelist: vec![],
+            openlist: BinaryHeap::new(),
+            closelist: HashSet::new(),
             solved_node: None,
             heuristic,
             reference,
@@ -89,37 +102,28 @@ impl Arena {
         self.nodes[parent_idx].is_children_generated = true;
     }
 
-    /// iter over openlist to find the optimal step, the item is poped from openlist
-    /// and it's index is returned
-    fn pick_best_option(&mut self) -> usize {
-        let mut res: (usize, usize) = (usize::MAX, usize::MAX);
-        let mut i = 0;
-        for (_i, idx) in self.openlist.iter().enumerate() {
-            let node = &self.nodes[*idx];
-            if node.state.mouv_count + node.cost < res.1 {
-                res.0 = *idx;
-                res.1 = node.state.mouv_count + node.cost;
-                i = _i;
-            }
+    /// find the optimal step, easy from an binaryheap with O(1) complexity.
+    /// it's index is returned
+    fn pick_best_option(&mut self) -> Result<usize, AppError> {
+        if let Some(res) = self.openlist.pop() {
+            Ok(res.node_index)
+        } else {
+            Err(AppError::new("Openlist is empty"))
         }
-        self.openlist.remove(i);
-        res.0
     }
 
     /// iter over closedlist (I.E all the already explored state) and check if for all children of a parent node
     /// the state has not already been explored then push it to the openlist
     fn push_to_openlist(&mut self, parent_idx: usize) {
-        for child in self.nodes[parent_idx].children.clone() {
-            // let mut skip_child = false;
-            // for closelist_idx in self.closelist.iter() {
-            //     if self.nodes[child].state == self.nodes[*closelist_idx].state {
-            //         skip_child = true;
-            //         break;
-            //     }
-            // }
-            // if !skip_child {
-            self.openlist.push(child);
-            // }
+        let parent = &self.nodes[parent_idx];
+        for child_index in &parent.children {
+            let child = &self.nodes[*child_index];
+            if !self.closelist.contains(&child.state.clone()) {
+                self.openlist.push(OpenlistEntry {
+                    cost: child.h_cost + child.state.mouv_count,
+                    node_index: *child_index,
+                });
+            }
         }
     }
 
@@ -145,11 +149,12 @@ impl Arena {
 
             // children generation of current
             self.generate_children(current_node_idx);
-            self.closelist.push(current_node_idx);
+            self.closelist
+                .insert(self.nodes[current_node_idx].state.clone());
             self.push_to_openlist(current_node_idx);
 
             // pick the new current
-            current_node_idx = self.pick_best_option();
+            current_node_idx = self.pick_best_option()?;
 
             if debug && counter % 1000 == 0 {
                 println!(
@@ -184,7 +189,7 @@ pub struct Node {
 
     pub reference: Rc<PContainer>,
     pub heuristic: EHeuristic,
-    pub cost: usize,
+    pub h_cost: usize,
     pub parent: usize,
 
     pub children: Vec<usize>,
@@ -203,7 +208,7 @@ impl Node {
             state,
             id,
             heuristic,
-            cost: 0,
+            h_cost: 0,
             parent: parent.unwrap_or(0),
             children: Vec::with_capacity(1000),
             reference: Rc::clone(reference),
@@ -214,7 +219,7 @@ impl Node {
     }
 
     fn calculate_cost(&mut self) {
-        self.cost = set_heuristics(&self.heuristic, &self.state, &self.reference);
+        self.h_cost = set_heuristics(&self.heuristic, &self.state, &self.reference);
     }
 }
 
@@ -235,15 +240,15 @@ impl Display for Node {
             self.state.empty_cell.y,
             self.state.empty_cell.x,
             "Cost:".bold(),
-            if self.cost == 0 {
-                self.cost.to_string().green()
-            } else if self.cost < 10 {
-                self.cost.to_string().yellow()
+            if self.h_cost == 0 {
+                self.h_cost.to_string().green()
+            } else if self.h_cost < 10 {
+                self.h_cost.to_string().yellow()
             } else {
-                self.cost.to_string().red()
+                self.h_cost.to_string().red()
             },
             "Total:".bold(),
-            (self.cost + self.state.mouv_count).to_string().blue()
+            (self.h_cost + self.state.mouv_count).to_string().blue()
         )?;
         write!(f, "{}", self.state)
     }

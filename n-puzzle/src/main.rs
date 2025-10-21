@@ -10,6 +10,7 @@ use crate::error::AppError;
 use clap::Parser;
 use heuristics::EHeuristic;
 use puzzle::{Puzzle, gen_solved_ref};
+use rand::prelude::*;
 use std::fs::File;
 use std::io::{BufReader, stdin};
 use std::rc::Rc;
@@ -28,10 +29,20 @@ fn main() -> Result<(), AppError> {
     let args = Args::parse();
     let mut puzzle = Puzzle::new(args.size);
 
+    let mut rng = rand::rng();
+
     // generate reference
     let psref = gen_solved_ref(args.size);
     let mut ref_ = Puzzle::new(args.size);
     ref_.init_from(&psref)?;
+
+    let solvable_flag = if args.solvable {
+        true
+    } else if args.unsolvable {
+        false
+    } else {
+        rng.random()
+    };
 
     // read and fill puzzle
     if let Some(file) = args.file {
@@ -42,12 +53,12 @@ fn main() -> Result<(), AppError> {
             let _ = puzzle.init(BufReader::new(f))?;
         }
     } else {
-        let _ = puzzle.generate(args.iterations, args.solvable, &psref)?;
+        let _ = puzzle.generate(args.iterations, solvable_flag, &psref)?;
     }
 
     // is the puzzle solvable ?
     if !puzzle.is_solvable() {
-        println!("puzzle not salvable");
+        println!("puzzle not solvable");
         return Ok(());
     }
 

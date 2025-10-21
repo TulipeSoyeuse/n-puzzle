@@ -9,6 +9,7 @@ use rand::prelude::*;
 use regex::Regex;
 use std::fmt::Debug;
 use std::fmt::Display;
+use std::hash::Hash;
 use std::io;
 #[derive(Debug, Clone)]
 pub struct Puzzle {
@@ -145,11 +146,11 @@ impl Puzzle {
 
         let mut retry = false;
         if !solvable {
-            println!("generate unsolvable puzzle");
+            println!("generate unsolvable puzzle with {} iterations", iterations);
             self.puzzle[0][0] = 2;
             self.puzzle[0][1] = 1;
         } else {
-            println!("generate solvable puzzle");
+            println!("generate solvable puzzle with {} iterations", iterations);
         }
 
         while iterations != 0 {
@@ -455,6 +456,18 @@ impl PartialEq for Puzzle {
             true
         } else {
             false
+        }
+    }
+}
+
+impl Eq for Puzzle {}
+
+impl Hash for Puzzle {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        for i in &self.puzzle {
+            for j in i {
+                j.hash(state);
+            }
         }
     }
 }
