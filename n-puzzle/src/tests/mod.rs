@@ -3,13 +3,12 @@
 //! What we should have done in Transcendance
 #[cfg(test)]
 mod puzzle_test {
-    use crate::heuristics::EHeuristic;
+    use crate::heuristics::{EHeuristic, gen_solved_ref_hashmap};
     use crate::puzzle::{Mouvement, Point, Puzzle, gen_solved_ref};
     use crate::tree::Arena;
     use std::fs::File;
     use std::io::BufReader;
     use std::iter::zip;
-    use std::rc::Rc;
 
     #[test]
     fn capacity() {
@@ -138,12 +137,12 @@ mod puzzle_test {
 
     #[test]
     fn tree_setup() {
-        let reference = gen_solved_ref(3);
+        let reference = gen_solved_ref_hashmap(3);
         let f = File::open("src/tests/test_dim3.puzzle").unwrap();
         let mut puzzle = Puzzle::new(3);
         let _ = puzzle.init(BufReader::new(f));
 
-        let mut arena = Arena::new(EHeuristic::HammingDistance, Rc::new(reference));
+        let mut arena = Arena::new(EHeuristic::HammingDistance { reference });
         arena.init(puzzle);
         arena.generate_children(0);
         assert_eq!(arena.len(), 5);
@@ -212,19 +211,19 @@ mod puzzle_test {
 
 #[cfg(test)]
 mod solving_test {
-    use crate::heuristics::EHeuristic;
-    use crate::puzzle::{Puzzle, gen_solved_ref};
+    use crate::heuristics::{EHeuristic, gen_solved_ref_hashmap};
+    use crate::puzzle::Puzzle;
     use crate::tree::Arena;
     use crate::tree::Node;
     use std::fs::File;
     use std::io::BufReader;
-    use std::rc::Rc;
 
     fn solve_puzzle(f: File, dim: usize) -> Option<Node> {
         let mut puzzle = Puzzle::new(dim);
         let _ = puzzle.init(BufReader::new(f)).unwrap();
-        let psref = gen_solved_ref(dim);
-        let mut arena = Arena::new(EHeuristic::ManhattanDistance, Rc::new(psref));
+        let mut arena = Arena::new(EHeuristic::ManhattanDistance {
+            reference: gen_solved_ref_hashmap(dim),
+        });
         arena.init(puzzle);
         arena.solve_puzzle(true).unwrap();
 
@@ -453,9 +452,8 @@ mod generate_test {
 
     #[test]
     fn base_generation_dim3_solvable() {
-        let psref = gen_solved_ref(3);
         let mut puzzle = Puzzle::new(3);
-        match puzzle.generate(0, true, &psref) {
+        match puzzle.generate(0, true) {
             Ok(()) => {
                 assert!(puzzle.is_solvable());
                 assert!(puzzle.is_solved(&gen_solved_ref(3)));
@@ -466,9 +464,8 @@ mod generate_test {
 
     #[test]
     fn base_generation_dim3_unsolvable() {
-        let psref = gen_solved_ref(3);
         let mut puzzle = Puzzle::new(3);
-        match puzzle.generate(0, false, &psref) {
+        match puzzle.generate(0, false) {
             Ok(()) => {
                 assert!(!puzzle.is_solvable());
             }

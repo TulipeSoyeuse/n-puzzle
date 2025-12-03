@@ -59,10 +59,16 @@ impl Iterator for PuzzleIntoIter {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq, Copy, Eq)]
 pub struct Point {
     pub x: usize,
     pub y: usize,
+}
+
+impl Display for Point {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Point {{x:{}, y:{}}}", self.x, self.y)
+    }
 }
 
 /// generate a reference puzzle
@@ -134,15 +140,11 @@ impl Puzzle {
         }
     }
 
-    pub fn generate(
-        &mut self,
-        mut iterations: u16,
-        solvable: bool,
-        reference: &PContainer,
-    ) -> Result<(), AppError> {
+    pub fn generate(&mut self, mut iterations: u16, solvable: bool) -> Result<(), AppError> {
         let mut rng = rand::rng();
 
-        self.init_from(reference)?;
+        let reference = gen_solved_ref(self.dim);
+        self.init_from(&reference)?;
 
         let mut retry = false;
         if !solvable {

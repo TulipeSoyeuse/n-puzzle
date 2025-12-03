@@ -7,19 +7,21 @@ mod tree;
 
 use crate::cli::Args;
 use crate::error::AppError;
+use crate::heuristics::gen_solved_ref_hashmap;
 use clap::Parser;
 use heuristics::EHeuristic;
-use puzzle::{Puzzle, gen_solved_ref};
+use puzzle::Puzzle;
 use rand::prelude::*;
 use std::fs::File;
 use std::io::{BufReader, stdin};
-use std::rc::Rc;
 use tree::Arena;
 
-fn match_heuristic(flag: String) -> Result<EHeuristic, AppError> {
+fn match_heuristic(flag: String, dim: usize) -> Result<EHeuristic, AppError> {
+    let reference = gen_solved_ref_hashmap(dim);
     match flag.as_str() {
-        "hd" => Ok(EHeuristic::HammingDistance),
-        "md" => Ok(EHeuristic::ManhattanDistance),
+        "hd" => Ok(EHeuristic::HammingDistance { reference }),
+        "md" => Ok(EHeuristic::ManhattanDistance { reference }),
+        "lc" => Ok(EHeuristic::LinearConflict { reference }),
         _ => Err(AppError::new("unkown heuristic")),
     }
 }
@@ -29,19 +31,12 @@ fn main() -> Result<(), AppError> {
     let args = Args::parse();
     let mut puzzle = Puzzle::new(args.size);
 
-    let mut rng = rand::rng();
-
-    // generate reference
-    let psref = gen_solved_ref(args.size);
-    let mut ref_ = Puzzle::new(args.size);
-    ref_.init_from(&psref)?;
-
     let solvable_flag = if args.solvable {
         true
     } else if args.unsolvable {
         false
     } else {
-        rng.random()
+        rand::rng().random()
     };
 
     // read and fill puzzle
@@ -53,7 +48,7 @@ fn main() -> Result<(), AppError> {
             let _ = puzzle.init(BufReader::new(f))?;
         }
     } else {
-        let _ = puzzle.generate(args.iterations, solvable_flag, &psref)?;
+        let _ = puzzle.generate(args.iterations, solvable_flag)?;
     }
 
     // is the puzzle solvable ?
@@ -63,9 +58,8 @@ fn main() -> Result<(), AppError> {
     }
 
     // Tree setup
-    let heuristic = match_heuristic(args.heuristic)?;
-    let mut arena = Arena::new(heuristic, Rc::new(psref));
-    println!("solving with heuristic: {:?}", heuristic);
+    let heuristic = match_heuristic(args.heuristic, args.size)?;
+    let mut arena = Arena::new(heuristic);
     // solving with binary tree, using an arena system
     arena.init(puzzle);
     arena.solve_puzzle(args.debug)?;

@@ -1,0 +1,8 @@
+# solvable
+# hamming distance: 15
+# manhattanDistance: 35
+4
+15 5 7 2
+1 12 3 14
+4 8 11 10
+9 13 6 0

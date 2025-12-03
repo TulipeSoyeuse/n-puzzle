@@ -24,7 +24,7 @@ pub struct Args {
     pub stdin: bool,
 
     // heuristic flags
-    #[arg(long, default_value_t = String::from("md"), help = "\"md\" -> manhattan distance, \"hd\" -> hamming distance")]
+    #[arg(long, default_value_t = String::from("md"), help = "\"md\" -> manhattan distance, \"hd\" -> hamming distance, \"lc\" -> linear conflict + md")]
     pub heuristic: String,
 
     // ----  generation arguments ----

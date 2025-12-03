@@ -4,12 +4,12 @@
 //!
 use crate::{
     error::AppError,
-    heuristics::{EHeuristic, PContainer, set_heuristics},
-    puzzle::{Mouvement, Puzzle},
+    heuristics::EHeuristic,
+    puzzle::{Mouvement, Puzzle, gen_solved_ref},
 };
 
 use colored::Colorize;
-use std::{collections::BinaryHeap, rc::Rc};
+use std::collections::BinaryHeap;
 use std::{collections::HashSet, fmt::Display};
 
 #[derive(PartialEq, Eq)]
@@ -38,7 +38,6 @@ pub struct Arena {
     pub solved_node: Option<usize>,
 
     heuristic: EHeuristic,
-    reference: Rc<PContainer>,
 
     pub openlist: BinaryHeap<OpenlistEntry>,
     pub closelist: HashSet<Puzzle>,
@@ -49,19 +48,18 @@ pub struct Arena {
 /// if a new state is equal to an already explored state for exemple, for this purpose a closelist is used to keep track of all explored states)
 /// then the algorithm find the state in the openlist with the smallest heuristic and repeat this process until the puzzle is solved
 impl Arena {
-    pub fn new(heuristic: EHeuristic, reference: Rc<PContainer>) -> Self {
+    pub fn new(heuristic: EHeuristic) -> Self {
         Arena {
             nodes: vec![],
             openlist: BinaryHeap::new(),
             closelist: HashSet::new(),
             solved_node: None,
             heuristic,
-            reference,
         }
     }
 
     pub fn init(&mut self, state: Puzzle) {
-        let root = Node::new(state, 0, self.heuristic.clone(), &self.reference, None);
+        let root = Node::new(state, 0, self.heuristic.clone(), None);
         self.nodes.push(root);
     }
 
@@ -86,13 +84,7 @@ impl Arena {
             match v {
                 Ok(state) => {
                     let len = self.nodes.len();
-                    let node = Node::new(
-                        state,
-                        len,
-                        self.heuristic.clone(),
-                        &self.reference,
-                        Some(parent_idx),
-                    );
+                    let node = Node::new(state, len, self.heuristic.clone(), Some(parent_idx));
                     self.nodes.push(node);
                     self.nodes[parent_idx].children.push(len);
                 }
@@ -133,16 +125,14 @@ impl Arena {
             return Err(AppError::new("tree is empty"));
         }
         let mut current_node_idx = 0;
+        let reference = gen_solved_ref(self.nodes[0].state.dim);
 
         let mut counter: usize = 0;
         // A* algorithm loop
         loop {
             counter += 1;
             // solved check
-            if self.nodes[current_node_idx]
-                .state
-                .is_solved(&*self.reference)
-            {
+            if self.nodes[current_node_idx].state.is_solved(&reference) {
                 self.solved_node = Some(current_node_idx);
                 return Ok(());
             }
@@ -187,7 +177,6 @@ pub struct Node {
     pub state: Puzzle,
     pub id: usize,
 
-    pub reference: Rc<PContainer>,
     pub heuristic: EHeuristic,
     pub h_cost: usize,
     pub parent: usize,
@@ -197,13 +186,7 @@ pub struct Node {
 }
 
 impl Node {
-    fn new(
-        state: Puzzle,
-        id: usize,
-        heuristic: EHeuristic,
-        reference: &Rc<PContainer>,
-        parent: Option<usize>,
-    ) -> Self {
+    fn new(state: Puzzle, id: usize, heuristic: EHeuristic, parent: Option<usize>) -> Self {
         let mut node = Node {
             state,
             id,
@@ -211,7 +194,6 @@ impl Node {
             h_cost: 0,
             parent: parent.unwrap_or(0),
             children: Vec::with_capacity(1000),
-            reference: Rc::clone(reference),
             is_children_generated: false,
         };
         node.calculate_cost();
@@ -219,7 +201,7 @@ impl Node {
     }
 
     fn calculate_cost(&mut self) {
-        self.h_cost = set_heuristics(&self.heuristic, &self.state, &self.reference);
+        self.h_cost = self.heuristic.execute(&self.state);
     }
 }
 
