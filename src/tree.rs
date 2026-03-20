@@ -60,6 +60,7 @@ impl Arena {
 
     pub fn init(&mut self, state: Puzzle) {
         let root = Node::new(state, 0, self.heuristic.clone(), None);
+        println!("{}", root);
         self.nodes.push(root);
     }
 
@@ -83,10 +84,12 @@ impl Arena {
         ] {
             match v {
                 Ok(state) => {
-                    let len = self.nodes.len();
-                    let node = Node::new(state, len, self.heuristic.clone(), Some(parent_idx));
-                    self.nodes.push(node);
-                    self.nodes[parent_idx].children.push(len);
+                    if !self.closelist.contains(&state) {
+                        let len = self.nodes.len();
+                        let node = Node::new(state, len, self.heuristic.clone(), Some(parent_idx));
+                        self.nodes.push(node);
+                        self.nodes[parent_idx].children.push(len);
+                    }
                 }
                 Err(()) => (),
             };
@@ -110,12 +113,10 @@ impl Arena {
         let parent = &self.nodes[parent_idx];
         for child_index in &parent.children {
             let child = &self.nodes[*child_index];
-            if !self.closelist.contains(&child.state.clone()) {
-                self.openlist.push(OpenlistEntry {
-                    cost: child.h_cost + child.state.mouv_count,
-                    node_index: *child_index,
-                });
-            }
+            self.openlist.push(OpenlistEntry {
+                cost: child.h_cost + child.state.mouv_count,
+                node_index: *child_index,
+            });
         }
     }
 
@@ -166,6 +167,7 @@ impl Arena {
                 for i in path.into_iter().rev() {
                     println!("{}", self.nodes[i]);
                 }
+                println!("{} {}", "State explored:".bold(), self.closelist.len());
             }
             None => (),
         }
@@ -230,7 +232,7 @@ impl Display for Node {
                 self.h_cost.to_string().red()
             },
             "Total:".bold(),
-            (self.h_cost + self.state.mouv_count).to_string().blue()
+            (self.h_cost + self.state.mouv_count).to_string().blue(),
         )?;
         write!(f, "{}", self.state)
     }

@@ -1,6 +1,3 @@
-//! test module
-//!
-//! What we should have done in Transcendance
 #[cfg(test)]
 mod puzzle_test {
     use crate::heuristics::{EHeuristic, gen_solved_ref_hashmap};
@@ -266,6 +263,7 @@ mod solving_test {
 #[cfg(test)]
 mod solvability {
     use crate::puzzle::Puzzle;
+    use std::env;
     use std::io::BufReader;
     use std::process::{Command, Stdio};
 
@@ -275,8 +273,9 @@ mod solvability {
             // command setup and capture output ---------------------------------
             let dim = 3;
             let dimstr = dim.to_string();
+            println!("{:?}", env::current_dir().unwrap());
             let mut child = Command::new("python")
-                .args(["../npuzzle-gen.py", "-s", &dimstr])
+                .args(["npuzzle-gen.py", "-s", &dimstr])
                 .stdout(Stdio::piped())
                 .spawn()
                 .unwrap();
@@ -298,7 +297,7 @@ mod solvability {
             let dim = 4;
             let dimstr = dim.to_string();
             let mut child = Command::new("python")
-                .args(["../npuzzle-gen.py", "-s", &dimstr])
+                .args(["npuzzle-gen.py", "-s", &dimstr])
                 .stdout(Stdio::piped())
                 .spawn()
                 .unwrap();
@@ -320,7 +319,7 @@ mod solvability {
             let dim = 5;
             let dimstr = dim.to_string();
             let mut child = Command::new("python")
-                .args(["../npuzzle-gen.py", "-s", &dimstr])
+                .args(["npuzzle-gen.py", "-s", &dimstr])
                 .stdout(Stdio::piped())
                 .spawn()
                 .unwrap();
@@ -342,7 +341,7 @@ mod solvability {
             let dim = 6;
             let dimstr = dim.to_string();
             let mut child = Command::new("python")
-                .args(["../npuzzle-gen.py", "-s", &dimstr])
+                .args(["npuzzle-gen.py", "-s", &dimstr])
                 .stdout(Stdio::piped())
                 .spawn()
                 .unwrap();
@@ -364,7 +363,7 @@ mod solvability {
             let dim = 3;
             let dimstr = dim.to_string();
             let mut child = Command::new("python")
-                .args(["../npuzzle-gen.py", "-u", &dimstr])
+                .args(["npuzzle-gen.py", "-u", &dimstr])
                 .stdout(Stdio::piped())
                 .spawn()
                 .unwrap();
@@ -386,7 +385,7 @@ mod solvability {
             let dim = 4;
             let dimstr = dim.to_string();
             let mut child = Command::new("python")
-                .args(["../npuzzle-gen.py", "-u", &dimstr])
+                .args(["npuzzle-gen.py", "-u", &dimstr])
                 .stdout(Stdio::piped())
                 .spawn()
                 .unwrap();
@@ -408,7 +407,7 @@ mod solvability {
             let dim = 5;
             let dimstr = dim.to_string();
             let mut child = Command::new("python")
-                .args(["../npuzzle-gen.py", "-u", &dimstr])
+                .args(["npuzzle-gen.py", "-u", &dimstr])
                 .stdout(Stdio::piped())
                 .spawn()
                 .unwrap();
@@ -430,7 +429,7 @@ mod solvability {
             let dim = 6;
             let dimstr = dim.to_string();
             let mut child = Command::new("python")
-                .args(["../npuzzle-gen.py", "-u", &dimstr])
+                .args(["npuzzle-gen.py", "-u", &dimstr])
                 .stdout(Stdio::piped())
                 .spawn()
                 .unwrap();

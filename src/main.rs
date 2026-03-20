@@ -19,6 +19,7 @@ use tree::Arena;
 fn match_heuristic(flag: String, dim: usize) -> Result<EHeuristic, AppError> {
     let reference = gen_solved_ref_hashmap(dim);
     match flag.as_str() {
+        "bf" => Ok(EHeuristic::BruteForce {}),
         "hd" => Ok(EHeuristic::HammingDistance { reference }),
         "md" => Ok(EHeuristic::ManhattanDistance { reference }),
         "lc" => Ok(EHeuristic::LinearConflict { reference }),

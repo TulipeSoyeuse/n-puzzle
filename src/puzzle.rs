@@ -336,7 +336,7 @@ impl Display for Puzzle {
             writeln!(f, "|")?;
         }
 
-        // Final bottom border
+        // bottom border
         for _ in 0..self.dim {
             write!(f, "+---")?;
         }

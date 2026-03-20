@@ -12,15 +12,23 @@ pub type MapReference = HashMap<u16, Point>;
 #[derive(Clone, Debug)]
 pub enum EHeuristic {
     /// this heuristics returns the number of tiles that are not in their final position.
-    HammingDistance { reference: MapReference },
+    HammingDistance {
+        reference: MapReference,
+    },
 
     /// Manhattan distance of a tile is the distance or the number of slides/tiles away it is from it’s goal state.
     /// Thus, for a certain state the Manhattan distance will be the sum of the Manhattan distances of all the tiles except the blank tile.
-    ManhattanDistance { reference: MapReference },
+    ManhattanDistance {
+        reference: MapReference,
+    },
 
     /// Manhattan distance enhanced by linear conflict, check row wise and column wise if two tiles are inverted, if so, 2 extra moves minimun are required
     /// to solve
-    LinearConflict { reference: MapReference },
+    LinearConflict {
+        reference: MapReference,
+    },
+
+    BruteForce {},
 }
 
 impl EHeuristic {
@@ -31,6 +39,7 @@ impl EHeuristic {
             Self::LinearConflict { reference } => {
                 linear_conflict(p, reference) + manhattan_distance(p, reference)
             }
+            Self::BruteForce {} => 0,
         }
     }
 }
@@ -106,14 +115,17 @@ fn linear_conflict(puzzle: &Puzzle, reference: &MapReference) -> usize {
                 }
             }
         }
-
-        // count conflicts
         for i in 0..row_tiles.len() {
             for j in i + 1..row_tiles.len() {
-                if row_tiles[i].1 > row_tiles[j].1 {
+                let conflict = if row % 2 == 0 {
+                    row_tiles[i].1 > row_tiles[j].1 // left → right
+                } else {
+                    row_tiles[i].1 < row_tiles[j].1 // right → left
+                };
+                if conflict {
                     #[cfg(test)]
                     println!(
-                        "find a linear conflic between ({}, {}) and ({}, {}) row wize",
+                        "find a linear conflict between ({}, {}) and ({}, {}) row wise",
                         row_tiles[i].0, row_tiles[i].1, row_tiles[j].0, row_tiles[j].1
                     );
                     conflicts += 1;
@@ -134,13 +146,17 @@ fn linear_conflict(puzzle: &Puzzle, reference: &MapReference) -> usize {
                 }
             }
         }
-
         for i in 0..col_tiles.len() {
             for j in i + 1..col_tiles.len() {
-                if col_tiles[i].1 > col_tiles[j].1 {
+                let conflict = if col % 2 == 0 {
+                    col_tiles[i].1 > col_tiles[j].1 // top → bottom
+                } else {
+                    col_tiles[i].1 < col_tiles[j].1 // bottom → top
+                };
+                if conflict {
                     #[cfg(test)]
                     println!(
-                        "find a linear conflic between {} and {} row wize",
+                        "find a linear conflict between {} and {} col wise",
                         col_tiles[i].1, col_tiles[j].1
                     );
                     conflicts += 1;
@@ -150,6 +166,7 @@ fn linear_conflict(puzzle: &Puzzle, reference: &MapReference) -> usize {
     }
     conflicts * 2
 }
+
 fn hamming_distance(p: &Puzzle, reference: &MapReference) -> usize {
     let mut counter = 0;
 
@@ -224,6 +241,6 @@ mod heuristics {
         p.init(BufReader::new(f)).unwrap();
         println!("{}", p);
 
-        assert_eq!(linear_conflict(&p, &reference), 4);
+        assert_eq!(linear_conflict(&p, &reference), 2);
     }
 }
