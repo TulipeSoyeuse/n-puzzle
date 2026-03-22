@@ -2,8 +2,7 @@ NAME	= n-puzzle
 CARGO	= cargo
 
 all:
-	$(CARGO) build --release
-	@cp target/release/n-puzzle .
+	$(CARGO) install --path .
 
 clean:
 	$(CARGO) clean
@@ -12,8 +11,7 @@ test:
 	$(CARGO) test
 
 fclean: clean
-	rm -f $(NAME)
-	rm -f target/release/$(NAME)
+	$(CARGO) uninstall
 
 re: fclean all
 

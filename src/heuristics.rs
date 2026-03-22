@@ -105,29 +105,31 @@ fn linear_conflict(puzzle: &Puzzle, reference: &MapReference) -> usize {
 
     // --- Row conflicts ---
     for row in 0..dim {
-        let mut row_tiles = Vec::new();
-        for col in 0..dim {
-            let tile = puzzle.puzzle[row][col];
-            if tile != 0 {
+        let tiles: Vec<(usize, usize)> = (0..dim)
+            .filter_map(|col| {
+                let tile = puzzle.puzzle[row][col];
+                if tile == 0 {
+                    return None;
+                }
                 let point = reference[&tile];
                 if point.x == row {
-                    row_tiles.push((col, point.y));
-                }
-            }
-        }
-        for i in 0..row_tiles.len() {
-            for j in i + 1..row_tiles.len() {
-                let conflict = if row % 2 == 0 {
-                    row_tiles[i].1 > row_tiles[j].1 // left → right
+                    Some((col, point.y))
                 } else {
-                    row_tiles[i].1 < row_tiles[j].1 // right → left
-                };
-                if conflict {
-                    #[cfg(test)]
-                    println!(
-                        "find a linear conflict between ({}, {}) and ({}, {}) row wise",
-                        row_tiles[i].0, row_tiles[i].1, row_tiles[j].0, row_tiles[j].1
-                    );
+                    None
+                }
+            })
+            .collect();
+
+        for i in 0..tiles.len() {
+            for j in i + 1..tiles.len() {
+                let (cur_i, tgt_i) = tiles[i];
+                let (cur_j, tgt_j) = tiles[j];
+                // they conflict if their relative order is inverted
+                // cur_i < cur_j is guaranteed, so conflict if tgt_i > tgt_j
+                if (cur_i < cur_j) && (tgt_i > tgt_j) {
+                    conflicts += 1;
+                }
+                if (cur_i > cur_j) && (tgt_i < tgt_j) {
                     conflicts += 1;
                 }
             }
@@ -136,34 +138,35 @@ fn linear_conflict(puzzle: &Puzzle, reference: &MapReference) -> usize {
 
     // --- Column conflicts ---
     for col in 0..dim {
-        let mut col_tiles = Vec::new();
-        for row in 0..dim {
-            let tile = puzzle.puzzle[row][col];
-            if tile != 0 {
+        let tiles: Vec<(usize, usize)> = (0..dim)
+            .filter_map(|row| {
+                let tile = puzzle.puzzle[row][col];
+                if tile == 0 {
+                    return None;
+                }
                 let point = reference[&tile];
                 if point.y == col {
-                    col_tiles.push((row, point.x));
-                }
-            }
-        }
-        for i in 0..col_tiles.len() {
-            for j in i + 1..col_tiles.len() {
-                let conflict = if col % 2 == 0 {
-                    col_tiles[i].1 > col_tiles[j].1 // top → bottom
+                    Some((row, point.x))
                 } else {
-                    col_tiles[i].1 < col_tiles[j].1 // bottom → top
-                };
-                if conflict {
-                    #[cfg(test)]
-                    println!(
-                        "find a linear conflict between {} and {} col wise",
-                        col_tiles[i].1, col_tiles[j].1
-                    );
+                    None
+                }
+            })
+            .collect();
+
+        for i in 0..tiles.len() {
+            for j in i + 1..tiles.len() {
+                let (cur_i, tgt_i) = tiles[i];
+                let (cur_j, tgt_j) = tiles[j];
+                if (cur_i < cur_j) && (tgt_i > tgt_j) {
+                    conflicts += 1;
+                }
+                if (cur_i > cur_j) && (tgt_i < tgt_j) {
                     conflicts += 1;
                 }
             }
         }
     }
+
     conflicts * 2
 }
 

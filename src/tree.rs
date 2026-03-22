@@ -9,8 +9,22 @@ use crate::{
 };
 
 use colored::Colorize;
-use std::collections::BinaryHeap;
+use std::sync::Arc;
+use std::sync::Once;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::{collections::BinaryHeap, process::exit};
 use std::{collections::HashSet, fmt::Display};
+
+static INIT: Once = Once::new();
+
+fn set_signal_handler(r: Arc<AtomicBool>) {
+    INIT.call_once(|| {
+        ctrlc::set_handler(move || {
+            r.store(true, Ordering::SeqCst);
+        })
+        .expect("Error setting Ctrl-C handler");
+    });
+}
 
 #[derive(PartialEq, Eq)]
 pub struct OpenlistEntry {
@@ -121,6 +135,9 @@ impl Arena {
     }
 
     pub fn solve_puzzle(&mut self, debug: bool) -> Result<(), AppError> {
+        // signal handling
+        let running = Arc::new(AtomicBool::new(false));
+        set_signal_handler(running.clone());
         // checking if arena is initialized
         if self.nodes.is_empty() {
             return Err(AppError::new("tree is empty"));
@@ -131,6 +148,12 @@ impl Arena {
         let mut counter: usize = 0;
         // A* algorithm loop
         loop {
+            // signal check
+            if running.load(Ordering::SeqCst) {
+                println!("{}", self.nodes[current_node_idx]);
+                exit(1);
+            }
+
             counter += 1;
             // solved check
             if self.nodes[current_node_idx].state.is_solved(&reference) {
