@@ -217,11 +217,12 @@ impl Puzzle {
         let mut first_line = true;
 
         while f.read_line(&mut buf)? != 0 {
-            if buf.starts_with("#") {
+            let line = buf.split('#').next().unwrap_or("").trim();
+            println!("'{}'", line);
+            if line.len() == 0 {
             } else if first_line {
                 first_line = false;
-                let file_size: usize = buf
-                    .trim()
+                let file_size: usize = line
                     .parse()
                     .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
                 if file_size != self.dim {
@@ -233,7 +234,7 @@ impl Puzzle {
             } else {
                 let mut j = 0;
                 for c in re
-                    .find_iter(&buf)
+                    .find_iter(&line)
                     .map(|f| f.as_str().parse::<u16>().unwrap())
                 {
                     if c == 0 {
