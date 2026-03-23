@@ -3,6 +3,17 @@ use std::path::PathBuf;
 use clap::Parser;
 // args parser
 
+fn greater_than_1(s: &str) -> Result<usize, String> {
+    let val: usize = s
+        .parse()
+        .map_err(|_| format!("`{s}` is not a valid number"))?;
+    if val >= 2 {
+        Ok(val)
+    } else {
+        Err(format!("value must be greater than 1, got {val}"))
+    }
+}
+
 #[derive(Parser)]
 #[command(
     version = "1.0",
@@ -13,7 +24,7 @@ use clap::Parser;
 
 pub struct Args {
     // size of the puzzle
-    #[arg(long, help = "size of the puzzle")]
+    #[arg(long, help = "size of the puzzle", value_parser = greater_than_1)]
     pub size: usize,
 
     // file holding the puzzle (alternatively if not provided, generated)
