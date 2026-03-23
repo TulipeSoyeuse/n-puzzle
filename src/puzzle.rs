@@ -220,7 +220,16 @@ impl Puzzle {
             if buf.starts_with("#") {
             } else if first_line {
                 first_line = false;
-                ()
+                let file_size: usize = buf
+                    .trim()
+                    .parse()
+                    .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+                if file_size != self.dim {
+                    return Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        "file size not coherent with cli size flag",
+                    ));
+                }
             } else {
                 let mut j = 0;
                 for c in re
